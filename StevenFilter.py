@@ -28,7 +28,7 @@ class Steven5538:
 		self.driver = parser.get('WIFI','DRIVER')
 		self.keyword = parser.get('SETTING','KEYWORD')
 		if ',' in self.keyword:
-			self.keyword = keyword.split(',')
+			self.keyword = self.keyword.split(',')
 
 	def printConfig(self):
 		print 'Install ', self.install
