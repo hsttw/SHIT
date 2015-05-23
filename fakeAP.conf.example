@@ -11,3 +11,7 @@ CHANNEL=4
 DRIVER=nl80211
 
 # vim: set ft=sh:
+
+## Log setting
+[SETTING]
+KEYWORD=user,passwd
