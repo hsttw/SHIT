@@ -15,6 +15,11 @@ run_service () {
 		${CMD} enable ${PROG}
 		${CMD} ${OP} ${PROG}
 	elif [ x"$(echo ${CMD} | grep service)" != x"" ]; then
+		## In the debin system, hostapd does NOT set will
+		if [ "${PROG}" = "hostapd" ]; then
+			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g'
+		fi
+
 		${CMD} ${PROG} ${OP}
 	else
 		echo -e "\e[1;31mUnknown service command\e[m"
@@ -63,13 +68,6 @@ interface=$NIC
 channel=$CHANNEL
 driver=nl80211
 EOF
-
-	cnt=0
-	for ssid in ${SSID[@]:1}
-	do
-		echo -e "\nbss=${NIC}_${cnt}\nssid=$ssid" >> $HOSTAPD_CONF
-		cnt=$((cnt+1))
-	done
 }
 ip_set() {
 	ifconfig $(ap_dongle $BUFFALO) $IP
