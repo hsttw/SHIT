@@ -193,20 +193,6 @@ case "$1" in
 	scan)
 		scanSSID
 		;;
-	monitor-start)
-		checkRoot
-		NIC=$(not_ap_dongle)
-		ifconfig ${NIC} down
-		iwconfig ${NIC} mode monitor
-		ifconfig ${NIC} up
-		;;
-	monitor-stop)
-		checkRoot
-		NIC=$(not_ap_dongle)
-		ifconfig ${NIC} down
-		iwconfig ${NIC} mode managed
-		ifconfig ${NIC} up
-		;;
 	*)
 		cat <<EOF
 $0 [opcode]
