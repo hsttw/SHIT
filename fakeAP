@@ -1,10 +1,14 @@
 #! /usr/bin/env bash
 
-CHANNEL=4
+if [ -f fakeAP.conf ]; then
+	. fakeAP.conf
+else
+	. fakeAP.conf.example
+fi
 
-IP=169.254.1.1
-BUFFALO="b0:c7:45"
-INSTALL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null)
+if [ x"${INSTALL}" = x"" ]; then
+	INSTALL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null)
+fi
 BIN=(hostapd dnsmasq iw python2 scapy bash-completion)
 
 run_service () {
@@ -66,7 +70,7 @@ bssid=${MAC}
 ssid=${SSID[0]}
 interface=$NIC
 channel=$CHANNEL
-driver=nl80211
+driver=${DRIVER}
 EOF
 }
 ip_set() {
