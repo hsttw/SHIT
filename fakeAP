@@ -93,7 +93,7 @@ dnsmasq_conf() {
 	ip=$(echo $IP | sed 's/\([[:digit:]]*\)$//')
 
 	cat << EOF > /etc/dnsmasq.conf
-dhcp-leasefile=/tmp/dnsmasq.lease
+dhcpleasefile=/tmp/dnsmasq.lease
 interface=$(ap_dongle $BUFFALO)
 dhcp-range=${ip}0,${ip}254,12h		# DHCP IP range
 dhcp-option=1,255.255.255.0			# subnet mask
@@ -116,6 +116,8 @@ dns() {
 	esac
 }
 NAT() {
+	## Always enable ip forward
+	echo 1 > /proc/sys/net/ipv4/ip_forward
 	case $1 in
 		start)
 			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
