@@ -1,9 +1,11 @@
 
 ## System setting
+[SYSTEM]
 INSTALL=
 
 ## WiFI dongle setting
-BUFFALO="b0:c7:45"
+[WIFI]
+MACPREFIX="b0:c7:45"
 IP=169.254.1.1
 CHANNEL=4
 DRIVER=nl80211
