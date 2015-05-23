@@ -1,0 +1,227 @@
+#! /usr/bin/env bash
+
+CHANNEL=4
+
+IP=169.254.1.1
+BUFFALO="b0:c7:45"
+INSTALL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null)
+BIN=(hostapd dnsmasq iw python2 scapy bash-completion)
+
+run_service () {
+	PROG="$1"
+	OP="$2"
+	CMD=$(which systemctl 2>/dev/null || which service 2>/dev/null)
+	if [ x"$(echo ${CMD} | grep systemctl)" != x"" ]; then
+		${CMD} enable ${PROG}
+		${CMD} ${OP} ${PROG}
+	elif [ x"$(echo ${CMD} | grep service)" != x"" ]; then
+		${CMD} ${PROG} ${OP}
+	else
+		echo -e "\e[1;31mUnknown service command\e[m"
+	fi
+}
+ap_dongle() {
+	MAC="$1"
+	if [ x"${MAC}" = x"" ] ;then
+		echo ""
+	else
+		ls /sys/class/net/ | while read NIC
+		do
+			if [ x"`cat /sys/class/net/$NIC/address | grep $MAC`" != x"" ]; then
+				echo $NIC
+			fi
+		done
+		echo ""
+	fi
+}
+not_ap_dongle() {
+	NIC=$(ap_dongle ${BUFFALO})
+	echo $(ls /sys/class/net/ | grep wlan | grep -v ${NIC})
+}
+checkRoot() {
+	if [ x`id -u` != x0 ]; then
+		echo -e "\x1b[1;31mNeed to be root\x1b[m"
+		exit -1
+	fi
+}
+hostapd_conf() {
+	HOSTAPD_CONF="/etc/hostapd/hostapd.conf"
+	
+	if [ x"${#@}" = x"0" ]; then
+		SSID=( RPi2 )
+	else
+		SSID=${@}
+	fi
+
+	NIC=$(ap_dongle $BUFFALO)
+	MAC=`cat /sys/class/net/${NIC}/address`
+
+	cat << EOF > $HOSTAPD_CONF
+bssid=${MAC}
+ssid=${SSID[0]}
+interface=$NIC
+channel=$CHANNEL
+driver=nl80211
+EOF
+
+	cnt=0
+	for ssid in ${SSID[@]:1}
+	do
+		echo -e "\nbss=${NIC}_${cnt}\nssid=$ssid" >> $HOSTAPD_CONF
+		cnt=$((cnt+1))
+	done
+}
+ip_set() {
+	ifconfig $(ap_dongle $BUFFALO) $IP
+}
+ap() {
+	case $1 in
+		start)
+			hostapd_conf ${@:2}
+			run_service hostapd start
+			;;
+		stop)
+			run_service hostapd stop
+			;;
+		*)
+			echo "ap [start|stop]"
+	esac
+}
+dnsmasq_conf() {
+	ip=$(echo $IP | sed 's/\([[:digit:]]*\)$//')
+
+	cat << EOF > /etc/dnsmasq.conf
+dhcp-leasefile=/tmp/dnsmasq.lease
+interface=$(ap_dongle $BUFFALO)
+dhcp-range=${ip}0,${ip}254,12h		# DHCP IP range
+dhcp-option=1,255.255.255.0			# subnet mask
+dhcp-option=28,${ip}255				# broadcast
+dhcp-option=3,$IP					# default gateway
+dhcp-option=6,$IP					# DNS
+EOF
+}
+dns() {
+	case $1 in
+		start)
+			dnsmasq_conf
+			run_service dnsmasq start
+			;;
+		stop)
+			run_service dnsmasq stop
+			;;
+		*)
+			echo -e "\e[1;31mdns [start|stop]\e[m"
+	esac
+}
+NAT() {
+	case $1 in
+		start)
+			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+			iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+			iptables -A FORWARD -i $(ap_dongle $BUFFALO) -o eth0 -j ACCEPT
+			;;
+		stop)
+			iptables -F
+			;;
+		*)
+			;;
+	esac
+}
+scanSSID() {
+	result=`iwlist $(not_ap_dongle) scan`
+	ESSID=( $(echo "${result}" | grep ESSID | sed 's/ESSID:"\(.*\)"/\1/g') )
+	Address=( $(echo "${result}" | grep Address | sed 's/Cell [[:digit:]]\+ - Address://g') )
+	Quality=( $(echo "${result}" | grep Quality | sed 's/Quality[=:]\(.*\) S\(.*\)/\1/g') )
+
+	NR=$(echo -e "${#ESSID[@]}\n${#Address[@]}\n${#Quality[@]}" | sort -g | head -n1)
+	for idx in $(seq 0 $((NR-1)))
+	do
+		printf "%-3d%-16s%-8s%16s\n" $((idx+1)) ${ESSID[$idx]} ${Quality[$idx]} ${Address[$idx]}
+	done
+}
+case "$1" in
+	info)
+		NR=$(ls /sys/class/net/ | grep wlan | wc -l)
+		echo -e "\e[1;36m#${NR} wifi dongle\e[m"
+		for idx in $(seq ${NR})
+		do
+			printf "%8s%24s\n" "wlan$((idx-1))" $(cat /sys/class/net/wlan$((idx-1))/address)
+		done
+		;;
+	install)
+		checkRoot
+		if [ x"$(echo ${INSTALL} | grep pacman)" != x"" ]; then
+			INSTALL="${INSTALL} -S"
+		elif [ x"$(echo ${INSTALL} | grep apt-get)" != x"" ]; then
+			INSTALL="${INSTALL} install"
+		else
+			echo -e "\e[1;31mNot found install script\e[m"
+			exit -1
+		fi
+		${INSTALL} ${BIN[@]}
+		;;
+	start)
+		checkRoot
+		ip_set
+		ap	start ${@:2}
+		dns	start
+		NAT start
+		;;
+	stop)
+		checkRoot
+		ap	stop
+		dns	stop
+		NAT stop
+		;;
+	status)
+		if [ x"$(ps aux | grep -v grep | grep dnsmasq)" = x"" ] ; then
+			echo -e "\e[1;31mdnsmasq not start!\e[m"
+		elif [ x"$(ps aux | grep -v grep | grep hostapd)" = x"" ]; then
+			echo -e "\e[1;31mhostapd not start!\e[m"
+		else
+			echo -e "\e[1;36m$(cat /tmp/dnsmasq.lease | wc -l) Clients\e[m"
+		fi
+
+		NR=$(cat /tmp/dnsmasq.lease | wc -l)
+		if [ ${NR} != 0 ]; then
+			cat /tmp/dnsmasq.lease | while read line
+			do
+				line=($line)
+				echo ""
+				echo -e "\t${line[3]}\t${line[2]}\t${line[1]}"
+			done
+		fi
+		;;
+	scan)
+		scanSSID
+		;;
+	monitor-start)
+		checkRoot
+		NIC=$(not_ap_dongle)
+		ifconfig ${NIC} down
+		iwconfig ${NIC} mode monitor
+		ifconfig ${NIC} up
+		;;
+	monitor-stop)
+		checkRoot
+		NIC=$(not_ap_dongle)
+		ifconfig ${NIC} down
+		iwconfig ${NIC} mode managed
+		ifconfig ${NIC} up
+		;;
+	*)
+		cat <<EOF
+$0 [opcode]
+
+	info          - Display the information about $0
+	install       - Install the necessary packages
+	start         - Start AP
+	stop          - Stop AP
+	status        - List the current connection"
+	scan          - Scan all public WiFi AP
+	monitor-start - Start the monitor mode
+	monitor-stop  - Stop the monitor mode
+EOF
+		;;
+esac
+
