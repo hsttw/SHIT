@@ -30,7 +30,7 @@ ap_dongle() {
 	if [ x"${MAC}" = x"" ] ;then
 		echo ""
 	else
-		ls /sys/class/net/ | while read NIC
+		ls /sys/class/net/ | grep -v "mon" | while read NIC
 		do
 			if [ x"`cat /sys/class/net/$NIC/address | grep $MAC`" != x"" ]; then
 				echo $NIC
