@@ -28,7 +28,7 @@ def http_handler(packet):
     if IP in packet and packet[IP].src.startswith(local_ip):
         request = str(packet[TCP].payload)
 
-        if len(request):
+        if request.startswith("GET") or request.startswith("POST"):
             #print packet.summary()
 
             # Get method, request path, query string, post data
@@ -45,15 +45,17 @@ def http_handler(packet):
             # Parse http headers
             headers = mimetools.Message(StringIO(http_headers))
 
-            print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s %-5s %s%s" % ( packet[IP].src, packet[IP].dst, request_method , headers["host"], request_path )
+            print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s %-4s %s%s" % ( packet[IP].src, packet[IP].dst, request_method , headers["host"], request_path )
 
-            if request_method.startswith("GET"):
+            if request_method == "GET":
                 if request_param:
                     dump_info(request_param)
 
-            elif request_method.startswith("POST"):
+            elif request_method == "POST":
                 if headers["Content-Type"] == "application/x-www-form-urlencoded":
                     dump_info(post_data)
+        else:
+            dump_info(request)
 
 
 if __name__ == '__main__':
