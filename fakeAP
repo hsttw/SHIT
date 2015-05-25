@@ -6,9 +6,6 @@ else
 	. fakeAP.conf.example
 fi
 
-if [ x"${INSTALL}" = x"" ]; then
-	INSTALL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null)
-fi
 BIN=(hostapd dnsmasq iw python2 scapy bash-completion)
 
 run_service () {
@@ -120,13 +117,13 @@ NAT() {
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	case $1 in
 		start)
-            iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
+			iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
 			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -m comment --comment "SHIT_FakeAP"
 			iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "SHIT_FakeAP"
 			iptables -A FORWARD -i $(ap_dongle $BUFFALO) -o eth0 -j ACCEPT -m comment --comment "SHIT_FakeAP"
 			;;
 		stop)
-            iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
+			iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
 			;;
 		*)
 			;;
@@ -155,15 +152,17 @@ case "$1" in
 		;;
 	install)
 		checkRoot
-		if [ x"$(echo ${INSTALL} | grep pacman)" != x"" ]; then
-			INSTALL="${INSTALL} -S"
-		elif [ x"$(echo ${INSTALL} | grep apt-get)" != x"" ]; then
-			INSTALL="${INSTALL} install"
+		if [ $(which apt-get) ]; then
+			apt-get update
+			apt-get -y install ${BIN[@]}
+		elif [ $(which pacman) ]; then
+			pacman -S ${BIN[@]}
+		elif [ $(which yum) ]; then
+			yum install ${BIN[@]}
 		else
 			echo -e "\e[1;31mNot found install script\e[m"
 			exit -1
 		fi
-		${INSTALL} ${BIN[@]}
 		;;
 	start)
 		checkRoot
