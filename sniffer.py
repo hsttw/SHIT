@@ -21,7 +21,7 @@ def dump_info(data):
     for keyword in keywords:
         for param in params:
             if param.startswith(keyword):
-                print "  \033[1;31m[CAPTURED]: \033[1;m" + param
+                print "  \033[1;31m[CAPTURED] \033[1;m" + param
 
 def http_handler(packet):
 
@@ -33,7 +33,7 @@ def http_handler(packet):
 
             # Get method, request path, query string, post data
             request_head, http_headers = request.split("\r\n", 1)
-            http_headers, post_data = http_headers.split("\r\n\r\n")
+            http_headers, post_data = http_headers.split("\r\n\r\n", 1)
 
             request_method, request_path, http_version = request_head.split(" ")
 
@@ -46,6 +46,9 @@ def http_handler(packet):
             headers = mimetools.Message(StringIO(http_headers))
 
             print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s %-4s %s%s" % ( packet[IP].src, packet[IP].dst, request_method , headers["host"], request_path )
+
+            if "Cookie" in headers:
+                print "  \033[1;31m[CAPTURED] \033[1;m" + headers["Cookie"]
 
             if request_method == "GET":
                 if request_param:
