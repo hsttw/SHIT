@@ -93,7 +93,7 @@ dnsmasq_conf() {
 	ip=$(echo $IP | sed 's/\([[:digit:]]*\)$//')
 
 	cat << EOF > /etc/dnsmasq.conf
-dhcpleasefile=/tmp/dnsmasq.lease
+dhcp-leasefile=/tmp/dnsmasq.lease
 interface=$(ap_dongle $BUFFALO)
 dhcp-range=${ip}0,${ip}254,12h		# DHCP IP range
 dhcp-option=1,255.255.255.0			# subnet mask
@@ -120,12 +120,13 @@ NAT() {
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	case $1 in
 		start)
-			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-			iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-			iptables -A FORWARD -i $(ap_dongle $BUFFALO) -o eth0 -j ACCEPT
+            iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
+			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -m comment --comment "SHIT_FakeAP"
+			iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "SHIT_FakeAP"
+			iptables -A FORWARD -i $(ap_dongle $BUFFALO) -o eth0 -j ACCEPT -m comment --comment "SHIT_FakeAP"
 			;;
 		stop)
-			iptables -F
+            iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
 			;;
 		*)
 			;;
