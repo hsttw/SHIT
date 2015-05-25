@@ -18,7 +18,7 @@ run_service () {
 	elif [ x"$(echo ${CMD} | grep service)" != x"" ]; then
 		## In the debin system, hostapd does NOT set will
 		if [ "${PROG}" = "hostapd" ]; then
-			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g'
+			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g' /etc/default/hostapd
 		fi
 
 		${CMD} ${PROG} ${OP}
