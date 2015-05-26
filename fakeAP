@@ -11,14 +11,14 @@ BIN=(hostapd dnsmasq iw python2 scapy bash-completion)
 run_service () {
 	PROG="$1"
 	OP="$2"
-    if [ $(which systemctl) ]; then
+	if [ $(which systemctl) ]; then
 		systemctl enable ${PROG}
 		systemctl ${OP} ${PROG}
-    elif [ $(which service) ]; then
+	elif [ $(which service) ]; then
 		## In the debin system, hostapd does NOT set well
 		if [ "${PROG}" = "hostapd" ]; then
 			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g' /etc/default/hostapd
-		fi
+	fi
 
 		service ${PROG} ${OP}
 	else
