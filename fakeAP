@@ -23,7 +23,7 @@ run_service () {
 }
 ap_dongle() {
 	MAC="$1"
-	if [ x"${MAC}" = x"" ] ;then
+	if [ x"${MAC}" = x"" ]; then
 		echo ""
 	else
 		ls /sys/class/net/ | grep -v "mon" | while read NIC
@@ -47,12 +47,6 @@ checkRoot() {
 }
 hostapd_conf() {
 	HOSTAPD_CONF="/etc/hostapd/hostapd.conf"
-	
-	if [ x"${#@}" = x"0" ]; then
-		SSID=( RPi2 )
-	else
-		SSID=${@}
-	fi
 
 	NIC=$(ap_dongle $MACPREFIX)
 	MAC=`cat /sys/class/net/${NIC}/address`
@@ -71,7 +65,7 @@ ip_set() {
 ap() {
 	case $1 in
 		start)
-			hostapd_conf ${@:2}
+			hostapd_conf
 			run_service hostapd start
 			;;
 		stop)
@@ -147,8 +141,14 @@ case "$1" in
 		;;
 	start)
 		checkRoot
-        echo -e "\e[1;36mFake AP [${@:2}] listening on "$(ap_dongle $MACPREFIX)"\e[m"
-		ap	start ${@:2}
+		if [ $2 ]; then
+			SSID=${@:2}
+		elif [ -z "$SSID" ]; then
+			SSID=( RPi2 )
+		fi
+
+		echo -e "\e[1;36mFake AP [${SSID}] listening on "$(ap_dongle $MACPREFIX)"\e[m"
+		ap	start
 		dns	start
 		NAT	start
 		ip_set
@@ -160,7 +160,7 @@ case "$1" in
 		NAT	stop
 		;;
 	status)
-		if [ x"$(ps aux | grep -v grep | grep dnsmasq)" = x"" ] ; then
+		if [ x"$(ps aux | grep -v grep | grep dnsmasq)" = x"" ]; then
 			echo -e "\e[1;31mdnsmasq not start!\e[m"
 		elif [ x"$(ps aux | grep -v grep | grep hostapd)" = x"" ]; then
 			echo -e "\e[1;31mhostapd not start!\e[m"
@@ -197,3 +197,4 @@ EOF
 		;;
 esac
 
+# vim: set noexpandtab:
