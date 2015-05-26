@@ -6,8 +6,6 @@ else
 	. fakeAP.conf.example
 fi
 
-BIN=(hostapd dnsmasq iw python2 scapy bash-completion)
-
 run_service () {
 	PROG="$1"
 	OP="$2"
