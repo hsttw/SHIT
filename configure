@@ -12,18 +12,23 @@ check() {
 	fi
 }
 
-MAKEFILE=$(which make)
+MAKEFILE=$(which make 2>/dev/null)
 check make ${MAKEFILE}
-platform=$(cat /etc/issue | cut -d ' ' -f 1)
-check platform ${platform}
-if [ x"${platform}" == x"Kali" ]; then
+
+INSTALL_TOOL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null || which yum 2>/dev/null)
+check install_tool ${INSTALL_TOOL}
+if [ x"$(echo ${INSTALL_TOOL} | grep apt-get)" != x"" ]; then
 	INSTALL="apt-get install"
 	UPDATE="apt-get update"
 	UPGRADE="apt-get upgrade"
-elif [ x"${platform}" == x"Arch" ]; then
+elif [ x"$(echo ${INSTALL_TOOL} | grep pacman)" != x"" ]; then
 	INSTALL="pacman -S"
 	UPDATE="pacman -Sy"
 	UPGRADE="pacman -Su"
+elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
+	INSTALL="yum install"
+	UPDATE="yum -y update"
+	UPGRADE="yum upgrade"
 fi
 
 ## Generate the Makefile.in
