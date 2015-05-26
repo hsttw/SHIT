@@ -12,16 +12,16 @@ run_service () {
 	PROG="$1"
 	OP="$2"
 	CMD=$(which systemctl 2>/dev/null || which service 2>/dev/null)
-	if [ x"$(echo ${CMD} | grep systemctl)" != x"" ]; then
-		${CMD} enable ${PROG}
-		${CMD} ${OP} ${PROG}
-	elif [ x"$(echo ${CMD} | grep service)" != x"" ]; then
-		## In the debin system, hostapd does NOT set will
+    if [ $(which systemctl) ]; then
+		systemctl enable ${PROG}
+		systemctl ${OP} ${PROG}
+    elif [ $(which service) ]; then
+		## In the debin system, hostapd does NOT set well
 		if [ "${PROG}" = "hostapd" ]; then
 			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g' /etc/default/hostapd
 		fi
 
-		${CMD} ${PROG} ${OP}
+		service ${PROG} ${OP}
 	else
 		echo -e "\e[1;31mUnknown service command\e[m"
 	fi
@@ -92,7 +92,7 @@ dnsmasq_conf() {
 	cat << EOF > /etc/dnsmasq.conf
 dhcp-leasefile=/tmp/dnsmasq.lease
 interface=$(ap_dongle $BUFFALO)
-dhcp-range=${ip}0,${ip}254,12h		# DHCP IP range
+dhcp-range=${ip}10,${ip}254,12h		# DHCP IP range
 dhcp-option=1,255.255.255.0			# subnet mask
 dhcp-option=28,${ip}255				# broadcast
 dhcp-option=3,$IP					# default gateway
@@ -143,7 +143,7 @@ scanSSID() {
 }
 case "$1" in
 	info)
-		NR=$(ls /sys/class/net/ | grep wlan | wc -l)
+		NR=$(ls /sys/class/net/ | grep -v "mon" | grep wlan | wc -l)
 		echo -e "\e[1;36m#${NR} wifi dongle\e[m"
 		for idx in $(seq ${NR})
 		do
@@ -166,6 +166,7 @@ case "$1" in
 		;;
 	start)
 		checkRoot
+        echo -e "\e[1;36mFake AP [${@:2}] listening on "$(ap_dongle $BUFFALO)"\e[m"
 		ip_set
 		ap	start ${@:2}
 		dns	start
