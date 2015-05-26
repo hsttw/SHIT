@@ -150,16 +150,16 @@ case "$1" in
 	start)
 		checkRoot
         echo -e "\e[1;36mFake AP [${@:2}] listening on "$(ap_dongle $MACPREFIX)"\e[m"
-		ip_set
 		ap	start ${@:2}
 		dns	start
-		NAT start
+		NAT	start
+		ip_set
 		;;
 	stop)
 		checkRoot
 		ap	stop
 		dns	stop
-		NAT stop
+		NAT	stop
 		;;
 	status)
 		if [ x"$(ps aux | grep -v grep | grep dnsmasq)" = x"" ] ; then
@@ -191,7 +191,7 @@ $0 [opcode]
 	install       - Install the necessary packages
 	start         - Start AP
 	stop          - Stop AP
-	status        - List the current connection"
+	status        - List the current connection
 	scan          - Scan all public WiFi AP
 	monitor-start - Start the monitor mode
 	monitor-stop  - Stop the monitor mode
