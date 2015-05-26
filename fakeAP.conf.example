@@ -1,17 +1,14 @@
 
 ## System setting
-[SYSTEM]
 INSTALL=
 
 ## WiFI dongle setting
-[WIFI]
-MACPREFIX="b0:c7:45"
+MACPREFIX=""
 IP=169.254.1.1
 CHANNEL=4
 DRIVER=nl80211
 
-# vim: set ft=sh:
-
 ## Log setting
-[SETTING]
 KEYWORD=user,passwd
+
+# vim: set ft=sh:

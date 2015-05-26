@@ -39,7 +39,7 @@ ap_dongle() {
 	fi
 }
 not_ap_dongle() {
-	NIC=$(ap_dongle ${BUFFALO})
+	NIC=$(ap_dongle ${MACPREFIX})
 	echo $(ls /sys/class/net/ | grep wlan | grep -v ${NIC})
 }
 checkRoot() {
@@ -57,7 +57,7 @@ hostapd_conf() {
 		SSID=${@}
 	fi
 
-	NIC=$(ap_dongle $BUFFALO)
+	NIC=$(ap_dongle $MACPREFIX)
 	MAC=`cat /sys/class/net/${NIC}/address`
 
 	cat << EOF > $HOSTAPD_CONF
@@ -69,7 +69,7 @@ driver=${DRIVER}
 EOF
 }
 ip_set() {
-	ifconfig $(ap_dongle $BUFFALO) $IP
+	ifconfig $(ap_dongle $MACPREFIX) $IP
 }
 ap() {
 	case $1 in
@@ -89,7 +89,7 @@ dnsmasq_conf() {
 
 	cat << EOF > /etc/dnsmasq.conf
 dhcp-leasefile=/tmp/dnsmasq.lease
-interface=$(ap_dongle $BUFFALO)
+interface=$(ap_dongle $MACPREFIX)
 dhcp-range=${ip}10,${ip}254,12h		# DHCP IP range
 dhcp-option=1,255.255.255.0			# subnet mask
 dhcp-option=28,${ip}255				# broadcast
@@ -118,7 +118,7 @@ NAT() {
 			iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
 			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -m comment --comment "SHIT_FakeAP"
 			iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "SHIT_FakeAP"
-			iptables -A FORWARD -i $(ap_dongle $BUFFALO) -o eth0 -j ACCEPT -m comment --comment "SHIT_FakeAP"
+			iptables -A FORWARD -i $(ap_dongle $MACPREFIX) -o eth0 -j ACCEPT -m comment --comment "SHIT_FakeAP"
 			;;
 		stop)
 			iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
@@ -148,23 +148,9 @@ case "$1" in
 			printf "%8s%24s\n" "wlan$((idx-1))" $(cat /sys/class/net/wlan$((idx-1))/address)
 		done
 		;;
-	install)
-		checkRoot
-		if [ $(which apt-get) ]; then
-			apt-get update
-			apt-get -y install ${BIN[@]}
-		elif [ $(which pacman) ]; then
-			pacman -S ${BIN[@]}
-		elif [ $(which yum) ]; then
-			yum install ${BIN[@]}
-		else
-			echo -e "\e[1;31mNot found install script\e[m"
-			exit -1
-		fi
-		;;
 	start)
 		checkRoot
-        echo -e "\e[1;36mFake AP [${@:2}] listening on "$(ap_dongle $BUFFALO)"\e[m"
+        echo -e "\e[1;36mFake AP [${@:2}] listening on "$(ap_dongle $MACPREFIX)"\e[m"
 		ip_set
 		ap	start ${@:2}
 		dns	start
