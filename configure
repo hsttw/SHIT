@@ -1,0 +1,47 @@
+#! /usr/bin/env bash
+# Copyright (C) 2015-2015 Hack Stuff.
+# Author : v1 <cmj@cmj.tw>
+#
+
+check() {
+	if [ x"$2" = x"" ]; then
+		printf "Check %s not found\n" $1
+		exit -1
+	else
+		printf "Checking for %-32s : %s \n" $1 $2
+	fi
+}
+
+MAKEFILE=$(which make)
+check make ${MAKEFILE}
+platform=$(cat /etc/issue | cut -d ' ' -f 1)
+check platform ${platform}
+if [ x"${platform}" == x"Kali" ]; then
+	INSTALL="apt-get install"
+	UPDATE="apt-get update"
+	UPGRADE="apt-get upgrade"
+elif [ x"${platform}" == x"Arch" ]; then
+	INSTALL="pacman -S"
+	UPDATE="pacman -Sy"
+	UPGRADE="pacman -Su"
+fi
+
+## Generate the Makefile.in
+cp Makefile.am Makefile.in
+sed -i "s/@INSTALL@/${INSTALL}/g"	Makefile.in
+sed -i "s/@UPDATE@/${UPDATE}/g"		Makefile.in
+sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
+
+
+cp fakeAP.conf.example fakeAP.conf
+ls /sys/class/net  | grep wlan | while read line
+do
+	if [ x"$(iw ${line} >/dev/null)" = x"" ]; then
+		sed -i "s/MACPREFIX=.*/MACPREFIX=\"$(cat /sys/class/net/${line}/address)\"/g" fakeAP.conf
+		break
+	fi
+done
+MACPREFIX=$(cat fakeAP.conf | grep MACPREFIX | cut -d '"' -f 2)
+check MACPREFIX "${MACPREFIX}"
+
+echo 'configure' finished successfully
