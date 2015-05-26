@@ -31,6 +31,9 @@ elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
 	UPGRADE="yum upgrade"
 fi
 
+IW=$(which iw 2>/dev/null)
+check iw ${IW}
+
 ## Generate the Makefile.in
 cp Makefile.am Makefile.in
 sed -i "s/@INSTALL@/${INSTALL}/g"	Makefile.in

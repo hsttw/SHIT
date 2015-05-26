@@ -2,4 +2,4 @@ INSTALL=@INSTALL@
 UPDATE=@UPDATE@
 UPGRADE=@UPGRADE@
 
-PKGS=git hostapd dnsmasq vim iw bash-completion
+PKGS=git hostapd dnsmasq vim wireless_tools bash-completion
