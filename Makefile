@@ -16,3 +16,6 @@ run:
 stop:
 	@echo Stop SHIT ...
 	./fakeAP stop
+
+daily-test:
+	@echo "*/10 * * * * cd ${PWD} && git pull --rebase && ./configure && make" | crontab -
