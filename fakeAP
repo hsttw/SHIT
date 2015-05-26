@@ -18,8 +18,7 @@ run_service () {
 		## In the debin system, hostapd does NOT set well
 		if [ "${PROG}" = "hostapd" ]; then
 			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g' /etc/default/hostapd
-	fi
-
+        fi
 		service ${PROG} ${OP}
 	else
 		echo -e "\e[1;31mUnknown service command\e[m"
