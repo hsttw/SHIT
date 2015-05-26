@@ -12,7 +12,6 @@ run_service () {
 	PROG="$1"
 	OP="$2"
 	if [ $(which systemctl) ]; then
-		systemctl enable ${PROG}
 		systemctl ${OP} ${PROG}
 	elif [ $(which service) ]; then
 		## In the debin system, hostapd does NOT set well

@@ -3,6 +3,8 @@
 # Author : v1 <cmj@cmj.tw>
 #
 
+start=`date +%s`
+
 check() {
 	if [ x"$2" = x"" ]; then
 		printf "Check %s not found\n" $1
@@ -11,9 +13,16 @@ check() {
 		printf "Checking for %-32s : %s \n" $1 $2
 	fi
 }
+check_bin_else_exit() {
+	BIN=$(which "$1" 2>/dev/null)
+	check "$1" ${BIN}
+}
 
-MAKEFILE=$(which make 2>/dev/null)
-check make ${MAKEFILE}
+
+check_bin_else_exit make
+check_bin_else_exit iw
+check_bin_else_exit crontab
+check_bin_else_exit python2
 
 INSTALL_TOOL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null || which yum 2>/dev/null)
 check install_tool ${INSTALL_TOOL}
@@ -31,8 +40,6 @@ elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
 	UPGRADE="yum upgrade"
 fi
 
-IW=$(which iw 2>/dev/null)
-check iw ${IW}
 
 ## Generate the Makefile.in
 cp Makefile.am Makefile.in
@@ -44,7 +51,7 @@ sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
 cp fakeAP.conf.example fakeAP.conf
 ls /sys/class/net  | grep wlan | while read line
 do
-	if [ x"$(iw ${line} >/dev/null)" = x"" ]; then
+	if [ x"$(iw ${line} info >/dev/null)" = x"" ]; then
 		sed -i "s/MACPREFIX=.*/MACPREFIX=\"$(cat /sys/class/net/${line}/address)\"/g" fakeAP.conf
 		break
 	fi
@@ -52,4 +59,6 @@ done
 MACPREFIX=$(cat fakeAP.conf | grep MACPREFIX | cut -d '"' -f 2)
 check MACPREFIX "${MACPREFIX}"
 
-echo 'configure' finished successfully
+
+end=`date +%s`
+echo 'configure' finished successfully \($(date -d @$((end-start)) -u +%Mm:%Ss)\)
