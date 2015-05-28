@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2
 #! Copyright (C) 2015-2015 Hack Stuff. All right reserved.
 #
 # Author : 2015 cmj<cmj@cmj.tw>
@@ -16,6 +16,10 @@ class SHIT_AP(object):
 	def stop(self, args):
 		raise NotImplementedError
 	def scan(self, args):
+		result = self._scan_(args)
+		for idx, ret in enumerate(result):
+			print "{0:<4}{1:<20}{3:8}-{2:>3}  {4:16}".format(idx+1, *ret)
+	def _scan_(self, args=None):
 		import commands, re
 
 		wifi = self.ScanWiFi
@@ -38,9 +42,7 @@ class SHIT_AP(object):
 
 		## Sorted by ESSID
 		result = sorted(result, key=lambda x: x[3])
-		for idx, ret in enumerate(result):
-			print "{0:<4}{1:<20}{3:8}-{2:>3}  {4:16}".format(idx+1, *ret)
-
+		return result
 	@property
 	def conf(self):
 		return self._conf_
@@ -73,6 +75,17 @@ class SHIT_AP(object):
 					return wifi
 		else:
 			return None
+	@property
+	def PopularESSID(self):
+		ret = [_[-1] for _ in self._scan_()]
+		ret = {_: ret.count(_) for _ in set(ret)}
+		tmp = ""
+		for _ in ret:
+			if not tmp:
+				tmp = _
+			elif ret[tmp] <= ret[_]:
+				tmp = _
+		return tmp
 if __name__ == '__main__':
 	import argparse, os
 
