@@ -5,9 +5,15 @@
 
 start=`date +%s`
 
+if [ `id -u` != 0 ]; then
+	echo -e "\e[1;31mRun as root first\e[m"
+	exit -1
+fi
+
 check() {
 	if [ x"$2" = x"" ]; then
 		printf "Check %s not found\n" $1
+		echo -e "You need to install by your self\n"
 		exit -1
 	else
 		printf "Checking for %-32s : %s \n" $1 $2
@@ -17,21 +23,37 @@ check_bin_else_exit() {
 	BIN=$(which "$1" 2>/dev/null)
 	check "$1" ${BIN}
 }
+check_bin_or_install() {
+	bin="$1"
 
+	if [ x"$2" = x"" ]; then
+		pkgname="$1"
+	else
+		pkgname="$2"
+	fi
 
-check_bin_else_exit make
-check_bin_else_exit iw
-check_bin_else_exit crontab
-check_bin_else_exit python2
+	BIN=$(which "${bin}" 2>/dev/null)
+	if [ x"${BIN}" = x"" ]; then
+		for pkgname in $@
+		do
+			${INSTALL} ${pkgname} >/dev/null 2>&1
+			if [ x"$?" = x"0" ]; then
+				break
+			fi
+		done
+		BIN=$(which "${bin}" 2>/dev/null)
+	fi
+	check "${bin}" "${BIN}"
+}
 
 INSTALL_TOOL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null || which yum 2>/dev/null)
 check install_tool ${INSTALL_TOOL}
 if [ x"$(echo ${INSTALL_TOOL} | grep apt-get)" != x"" ]; then
-	INSTALL="apt-get install"
+	INSTALL="apt-get install -y"
 	UPDATE="apt-get update"
 	UPGRADE="apt-get upgrade"
 elif [ x"$(echo ${INSTALL_TOOL} | grep pacman)" != x"" ]; then
-	INSTALL="pacman -S"
+	INSTALL="pacman -S --noconfirm"
 	UPDATE="pacman -Sy"
 	UPGRADE="pacman -Su"
 elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
@@ -40,6 +62,30 @@ elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
 	UPGRADE="yum upgrade"
 fi
 
+## Extra necessary package
+check_bin_or_install make
+check_bin_or_install iw
+check_bin_or_install iwconfig wireless_tools
+check_bin_or_install crontab
+check_bin_or_install python2 python
+check_bin_or_install git
+check_bin_or_install hostapd
+check_bin_or_install dnsmasq
+check_bin_or_install vim
+
+## Check the valid WiFi dongle
+validWiFiDongle() {
+	ls /sys/class/net | grep wlan | while read line
+	do
+		if [ x"$(iw ${line} info >/dev/null)" = x"" ]; then
+			cat /sys/class/net/${line}/address
+			break
+		fi
+	done
+}
+MACPREFIX=$(validWiFiDongle)
+check MACPREFIX "${MACPREFIX}"
+
 
 ## Generate the Makefile.in
 cp Makefile.am Makefile.in
@@ -47,18 +93,9 @@ sed -i "s/@INSTALL@/${INSTALL}/g"	Makefile.in
 sed -i "s/@UPDATE@/${UPDATE}/g"		Makefile.in
 sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
 
-
+## Generate the fakeAP.conf
 cp fakeAP.conf.example fakeAP.conf
-ls /sys/class/net  | grep wlan | while read line
-do
-	if [ x"$(iw ${line} info >/dev/null)" = x"" ]; then
-		sed -i "s/MACPREFIX=.*/MACPREFIX=\"$(cat /sys/class/net/${line}/address)\"/g" fakeAP.conf
-		break
-	fi
-done
-MACPREFIX=$(cat fakeAP.conf | grep MACPREFIX | cut -d '"' -f 2)
-check MACPREFIX "${MACPREFIX}"
-
+sed -i "s/MACPREFIX=.*/MACPREFIX=\"${MACPREFIX}\"/g" fakeAP.conf
 
 end=`date +%s`
 echo 'configure' finished successfully \($(date -d @$((end-start)) -u +%Mm:%Ss)\)
