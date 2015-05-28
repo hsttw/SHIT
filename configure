@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# Copyright (C) 2015-2015 Hack Stuff.
+# Copyright (C) 2015-2015 Hack Stuff. All right reserved.
 # Author : v1 <cmj@cmj.tw>
 #
 
@@ -68,6 +68,7 @@ check_bin_or_install iw
 check_bin_or_install iwconfig wireless_tools
 check_bin_or_install crontab
 check_bin_or_install python2 python
+check_bin_or_install scapy python-scapy
 check_bin_or_install git
 check_bin_or_install hostapd
 check_bin_or_install dnsmasq
