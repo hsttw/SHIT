@@ -17,9 +17,12 @@ class SHIT_AP(object):
 		else:
 			self.hostapdStart()
 			self.dnsmasqStart()
+			self.NAT(start=True)
+			self.ipSet()
 	def stop(self, args):
 		for serv in ("hostapd", "dnsmasq"):
 			self.service(serv, start=False)
+		self.NAT(start=False)
 	def scan(self, args):
 		result = self._scan_(args)
 		for idx, ret in enumerate(result):
@@ -63,32 +66,41 @@ class SHIT_AP(object):
 				psk={TGT_PSK}
 			}}
 		"""
+
 		with open(path, 'w') as fd:
-			fd.write(conf.format(**self.conf))
+			conf = conf.format(**self.conf)
+			conf = "\n".join([_.strip() for _ in conf.split('\n')])
+			fd.write(conf)
 	def hostapdStart(self, path="/etc/hostapd/hostapd.conf"):
+		conf = """
+			bssid={MAC}
+			ssid={SSID}
+			interface={NIC}
+			channel={CHANNEL}
+			driver={DRIVER}
+		"""
+
 		with open(path, 'w') as fd:
-			conf = """
-				bssid={MAC}
-				ssid={SSID}
-				interface={NIC}
-				channel={CHANNEL}
-				driver={DRIVER}
-			"""
-			fd.write(conf.format(**self.conf))
+			conf = conf.format(**self.conf)
+			conf = "\n".join([_.strip() for _ in conf.split('\n')])
+			fd.write(conf)
 
 		self.service("hostapd")
 	def dnsmasqStart(self, path="/etc/dnsmasq.conf"):
+		conf  = """
+			dhcp-leasefile=/tmp/dnsmasq.lease
+			interface={NIC}
+			dhcp-range={DHCP_RANGE},12h	# DHCP IP range
+			dhcp-option=1,255.255.255.0	# subnet mask
+			dhcp-option=28,{BROADCAST}	# broadcast
+			dhcp-option=3,{IP}			# default gateway
+			dhcp-option=6,{IP}			# DNS
+		"""
+
 		with open(path, 'w') as fd:
-			conf  = """
-				dhcp-leasefile=/tmp/dnsmasq.lease
-				interface={NIC}
-				dhcp-range={DHCP_RANGE},12h	# DHCP IP range
-				dhcp-option=1,255.255.255.0	# subnet mask
-				dhcp-option=28,{BROADCAST}	# broadcast
-				dhcp-option=3,{IP}			# default gateway
-				dhcp-option=6,{IP}			# DNS
-			"""
-			fd.write(conf.format(**self.conf))
+			conf = conf.format(**self.conf)
+			conf = "\n".join([_.strip() for _ in conf.split('\n')])
+			fd.write(conf)
 		self.service('dnsmasq')
 	def service(self, name, start=True):
 		import commands
@@ -99,6 +111,29 @@ class SHIT_AP(object):
 			cmd = "%s %s {0}" %(self.conf['SERVICE_TOOL'], 'start' if start else 'stop')
 		print cmd.format(name)
 		return commands.getoutput(cmd.format(name))
+	def NAT(self, start=True, label="SHIT_FakeAP"):
+		import commands
+
+		## Enable port forwarding
+		commands.getoutput("echo 1 > /proc/sys/net/ipv4/ip_forward")
+
+		comment = '-m comment --comment "{label}"'.format(label=label)
+		if start:
+			cmd  = ['iptables-save | grep -v "{label}" | iptables-restore']
+			cmd += ['iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE {comment}']
+			cmd += ['iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT {comment}']
+			cmd += ['iptables -A FORWARD -i {NIC} -o eth0 {comment}']
+		else:
+			cmd  = ['iptables-save | grep -v "{label}" | iptables-restore']
+
+		for c in cmd:
+			_c = c.format(label=label, comment=comment, **self.conf)
+			commands.getoutput(_c)
+	def ipSet(self):
+		import commands
+
+		return commands.getoutput("ifconfig {NIC} {IP}".format(**self.conf))
+
 	@property
 	def conf(self):
 		return self._conf_
