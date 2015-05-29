@@ -1,200 +1,154 @@
-#! /usr/bin/env bash
+#! /usr/bin/env python2
+#! Copyright (C) 2015-2015 Hack Stuff. All right reserved.
+#
+# Author : 2015/05 cmj<cmj@cmj.tw>
 
-if [ -f fakeAP.conf ]; then
-	. fakeAP.conf
-else
-	. fakeAP.conf.example
-fi
+class SHIT_AP(object):
+	def __init__(self, conf="fakeAP.conf"):
+		with open(conf) as fd:
+			conf = fd.read().split('\n')
+		self.conf = [_ for _ in conf if _ and not _.startswith('#')]
+	def __call__(self, action, args):
+		getattr(self, action)(args)
 
-run_service () {
-	PROG="$1"
-	OP="$2"
-	if [ $(which systemctl) ]; then
-		systemctl ${OP} ${PROG}
-	elif [ $(which service) ]; then
-		## In the debin system, hostapd does NOT set well
-		if [ "${PROG}" = "hostapd" ]; then
-			sed -i 's/^#DAEMON_CONF=.*$/DAEMON_CONF="\/etc\/hostapd\/hostapd.conf"/g' /etc/default/hostapd
-        fi
-		service ${PROG} ${OP}
-	else
-		echo -e "\e[1;31mUnknown service command\e[m"
-	fi
-}
-ap_dongle() {
-	MAC="$1"
-	if [ x"${MAC}" = x"" ]; then
-		echo ""
-	else
-		ls /sys/class/net/ | grep -v "mon" | while read NIC
-		do
-			if [ x"`cat /sys/class/net/$NIC/address | grep $MAC`" != x"" ]; then
-				echo $NIC
-			fi
-		done
-		echo ""
-	fi
-}
-not_ap_dongle() {
-	NIC=$(ap_dongle ${MACPREFIX})
-	echo $(ls /sys/class/net/ | grep wlan | grep -v ${NIC})
-}
-checkRoot() {
-	if [ x`id -u` != x0 ]; then
-		echo -e "\x1b[1;31mNeed to be root\x1b[m"
-		exit -1
-	fi
-}
-hostapd_conf() {
-	HOSTAPD_CONF="/etc/hostapd/hostapd.conf"
+	def start(self, args):
+		self.hostapdStart()
+		self.dnsmasqStart()
+	def stop(self, args):
+		for serv in ("hostapd", "dnsmasq"):
+			self.service(serv, start=False)
+	def scan(self, args):
+		result = self._scan_(args)
+		for idx, ret in enumerate(result):
+			print "{0:<4}{1:<20}{3:8}-{2:>3}  {4:16}".format(idx+1, *ret)
 
-	NIC=$(ap_dongle $MACPREFIX)
-	MAC=`cat /sys/class/net/${NIC}/address`
+	def _scan_(self, args=None):
+		import commands, re
 
-	cat << EOF > $HOSTAPD_CONF
-bssid=${MAC}
-ssid=${SSID[0]}
-interface=$NIC
-channel=$CHANNEL
-driver=${DRIVER}
-EOF
-}
-ip_set() {
-	ifconfig $(ap_dongle $MACPREFIX) $IP
-}
-ap() {
-	case $1 in
-		start)
-			hostapd_conf
-			run_service hostapd start
-			;;
-		stop)
-			run_service hostapd stop
-			;;
-		*)
-			echo "ap [start|stop]"
-	esac
-}
-dnsmasq_conf() {
-	ip=$(echo $IP | sed 's/\([[:digit:]]*\)$//')
+		wifi = self.ScanWiFi['NAME']
+		if not wifi:
+			raise SystemError("Not the valid WiFi")
 
-	cat << EOF > /etc/dnsmasq.conf
-dhcp-leasefile=/tmp/dnsmasq.lease
-interface=$(ap_dongle $MACPREFIX)
-dhcp-range=${ip}10,${ip}254,12h		# DHCP IP range
-dhcp-option=1,255.255.255.0			# subnet mask
-dhcp-option=28,${ip}255				# broadcast
-dhcp-option=3,$IP					# default gateway
-dhcp-option=6,$IP					# DNS
-EOF
-}
-dns() {
-	case $1 in
-		start)
-			dnsmasq_conf
-			run_service dnsmasq start
-			;;
-		stop)
-			run_service dnsmasq stop
-			;;
-		*)
-			echo -e "\e[1;31mdns [start|stop]\e[m"
-	esac
-}
-NAT() {
-	## Always enable ip forward
-	echo 1 > /proc/sys/net/ipv4/ip_forward
-	case $1 in
-		start)
-			iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
-			iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE -m comment --comment "SHIT_FakeAP"
-			iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "SHIT_FakeAP"
-			iptables -A FORWARD -i $(ap_dongle $MACPREFIX) -o eth0 -j ACCEPT -m comment --comment "SHIT_FakeAP"
-			;;
-		stop)
-			iptables-save | grep -v "SHIT_FakeAP" | iptables-restore
-			;;
-		*)
-			;;
-	esac
-}
-scanSSID() {
-	result=`iwlist $(not_ap_dongle) scan`
-	ESSID=( $(echo "${result}" | grep ESSID | sed 's/ESSID:"\(.*\)"/\1/g') )
-	Address=( $(echo "${result}" | grep Address | sed 's/Cell [[:digit:]]\+ - Address://g') )
-	Quality=( $(echo "${result}" | grep Quality | sed 's/Quality[=:]\(.*\) S\(.*\)/\1/g') )
+		cmd = 'iwlist {0} scan'.format(wifi)
+		ret = commands.getoutput(cmd)
+		ret = ret.split('Cell')
 
-	NR=$(echo -e "${#ESSID[@]}\n${#Address[@]}\n${#Quality[@]}" | sort -g | head -n1)
-	for idx in $(seq 0 $((NR-1)))
-	do
-		printf "%-3d%-16s%-8s%16s\n" $((idx+1)) ${ESSID[$idx]} ${Quality[$idx]} ${Address[$idx]}
-	done
-}
-case "$1" in
-	info)
-		NR=$(ls /sys/class/net/ | grep -v "mon" | grep wlan | wc -l)
-		echo -e "\e[1;36m#${NR} wifi dongle\e[m"
-		for idx in $(seq ${NR})
-		do
-			printf "%8s%24s\n" "wlan$((idx-1))" $(cat /sys/class/net/wlan$((idx-1))/address)
-		done
-		;;
-	start)
-		checkRoot
-		if [ $2 ]; then
-			SSID=${@:2}
-		elif [ -z "$SSID" ]; then
-			SSID=( RPi2 )
-		fi
+		TOKEN = [r'Address: (\S*)', r'Channel:(\d+)', r'Quality=(\S*)', r'ESSID:"(.*?)"']
+		TOKEN = r"[\s\S]*".join(TOKEN)
 
-		echo -e "\e[1;36mFake AP [${SSID}] listening on "$(ap_dongle $MACPREFIX)"\e[m"
-		ap	start
-		dns	start
-		NAT	start
-		ip_set
-		;;
-	stop)
-		checkRoot
-		ap	stop
-		dns	stop
-		NAT	stop
-		;;
-	status)
-		if [ x"$(ps aux | grep -v grep | grep dnsmasq)" = x"" ]; then
-			echo -e "\e[1;31mdnsmasq not start!\e[m"
-		elif [ x"$(ps aux | grep -v grep | grep hostapd)" = x"" ]; then
-			echo -e "\e[1;31mhostapd not start!\e[m"
-		else
-			echo -e "\e[1;36m$(cat /tmp/dnsmasq.lease | wc -l) Clients\e[m"
-		fi
+		cnt, result = 1, []
+		for _ in ret:
+			tmp = re.search(TOKEN, _, re.MULTILINE)
+			if not tmp:
+				continue
+			result.append(tmp.groups())
 
-		NR=$(cat /tmp/dnsmasq.lease | wc -l)
-		if [ ${NR} != 0 ]; then
-			cat /tmp/dnsmasq.lease | while read line
-			do
-				line=($line)
-				echo ""
-				echo -e "\t${line[3]}\t${line[2]}\t${line[1]}"
-			done
-		fi
-		;;
-	scan)
-		scanSSID
-		;;
-	*)
-		cat <<EOF
-$0 [opcode]
+		## Sorted by ESSID
+		result = sorted(result, key=lambda x: x[3])
+		return result
 
-	info          - Display the information about $0
-	install       - Install the necessary packages
-	start         - Start AP
-	stop          - Stop AP
-	status        - List the current connection
-	scan          - Scan all public WiFi AP
-	monitor-start - Start the monitor mode
-	monitor-stop  - Stop the monitor mode
-EOF
-		;;
-esac
+	def hostapdStart(self, path="/etc/hostapd/hostapd.conf"):
+		with open(path, 'w') as fd:
+			conf  = "bssid={MAC}\n"
+			conf += "ssid={SSID}\n"
+			conf += "interface={NIC}\n"
+			conf += "channel={CHANNEL}\n"
+			conf += "driver={DRIVER}\n"
+			fd.write(conf.format(**self.conf))
 
-# vim: set noexpandtab:
+		self.service("hostapd")
+	def dnsmasqStart(self, path="/etc/dnsmasq.conf"):
+		with open(path, 'w') as fd:
+			conf  = "dhcp-leasefile=/tmp/dnsmasq.lease\n"
+			conf += "interface={NIC}\n"
+			conf += "dhcp-range={DHCP_RANGE},12h\n"	# DHCP IP range
+			conf += "dhcp-option=1,255.255.255.0\n"	# subnet mask
+			conf += "dhcp-option=28,{BROADCAST}\n"	# broadcast
+			conf += "dhcp-option=3,{IP}\n"			# default gateway
+			conf += "dhcp-option=6,{IP}\n"			# DNS
+			fd.write(conf.format(**self.conf))
+		self.service('dnsmasq')
+	def service(self, name, start=True):
+		import commands
+
+		if 'service' == self.conf['SERVICE_TOOL']:
+			cmd = "%s {0} %s" %(self.conf['SERVICE_TOOL'], 'start' if start else 'stop')
+		elif 'systemctl' == self.conf['SERVICE_TOOL']:
+			cmd = "%s %s {0}" %(self.conf['SERVICE_TOOL'], 'start' if start else 'stop')
+		print cmd.format(name)
+		return commands.getoutput(cmd.format(name))
+	@property
+	def conf(self):
+		return self._conf_
+	@conf.setter
+	def conf(self, v):
+		import re
+
+		self._conf_ = {"CHANNEL": 4}
+
+		conf = {_.split('=')[0]: '='.join(_.split('=')[1:]) for _ in v}
+		for _ in conf:
+			if re.match(r'(["\']).*?\1', conf[_]):
+				conf[_] = conf[_][1:-1]
+		self._conf_.update(conf)
+
+		## Automatically append the configure
+		self._conf_["MAC"] = self.APWiFi['MAC']
+		self._conf_["NIC"] = self.APWiFi['NAME']
+		self._conf_["BROADCAST"] = "{0}.{1}.{2}.255".format(*self._conf_["IP"].split('.'))
+		self._conf_["DHCP_RANGE"] = "{0}.{1}.{2}.100,{0}.{1}.{2}.200"
+		self._conf_["DHCP_RANGE"] = self._conf_["DHCP_RANGE"].format(*self._conf_["IP"].split('.'))
+	@property
+	def WiFiList(self, path='/sys/class/net'):
+		import os
+		return [_ for _ in os.listdir(path) if _.startswith('wlan')]
+	@property
+	def APWiFi(self, path='/sys/class/net'):
+		if hasattr(self, "_APWiFi_"):
+			return self._APWiFi_
+
+		for wifi in self.WiFiList:
+			with open('{0}/{1}/address'.format(path, wifi)) as fd:
+				mac = fd.read()
+				if mac.startswith(self._conf_['MACPREFIX']):
+					self._APWiFi_ = {"NAME": wifi, "MAC": mac.strip()}
+					return self._APWiFi_
+		else:
+			return None
+	@property
+	def ScanWiFi(self, path='/sys/class/net'):
+		if hasattr(self, "_ScanWiFi_"):
+			return self._ScanWiFi_
+
+		for wifi in self.WiFiList:
+			with open('{0}/{1}/address'.format(path, wifi)) as fd:
+				mac = fd.read()
+				if not mac.startswith(self._conf_['MACPREFIX']):
+					self._ScanWiFi_ = {"NAME": wifi, "MAC": mac.strip()}
+					return self._ScanWiFi_
+		else:
+			return None
+	@property
+	def PopularESSID(self):
+		ret = [_[-1] for _ in self._scan_()]
+		ret = {_: ret.count(_) for _ in set(ret)}
+		tmp = ""
+		for _ in ret:
+			if not tmp:
+				tmp = _
+			elif ret[tmp] <= ret[_]:
+				tmp = _
+		return tmp
+if __name__ == '__main__':
+	import argparse, os
+
+	if os.getuid() and os.geteuid():
+		exit("You need to run as root")
+
+	parser = argparse.ArgumentParser(description="SHIT AP tools")
+	_a = parser.add_argument
+	_a("action", choices=['start', 'stop', 'scan'])
+	args = parser.parse_args()
+
+	ap = SHIT_AP()
+	ap(args.action, args)
