@@ -6,6 +6,10 @@ all:
 
 install:
 	@echo Install the SHIT project...
+	install -m755 fakeAP $(PREFIX)/sbin/fakeAP
+
+uninstall:
+	rm -f $(PREFIX)/sbin/fakeAP
 
 run:
 	@echo Run SHIT ...

@@ -12,8 +12,11 @@ class SHIT_AP(object):
 		getattr(self, action)(args)
 
 	def start(self, args):
-		self.hostapdStart()
-		self.dnsmasqStart()
+		if args.client:
+			self.wpa_supplicantStart()
+		else:
+			self.hostapdStart()
+			self.dnsmasqStart()
 	def stop(self, args):
 		for serv in ("hostapd", "dnsmasq"):
 			self.service(serv, start=False)
@@ -47,25 +50,44 @@ class SHIT_AP(object):
 		result = sorted(result, key=lambda x: x[3])
 		return result
 
+	def wpa_supplicantStart(self, path="/etc/wpa_supplicant.conf"):
+		conf = """
+			ctrl_interface=/var/run/wpa_supplicant
+
+			network={{
+				ssid="{TGT_SSID}"
+				key_mgmt=WPA-PSK
+				proto={TGT_PROTO}
+				pairwise=CCMP
+				group=CCMP
+				psk={TGT_PSK}
+			}}
+		"""
+		with open(path, 'w') as fd:
+			fd.write(conf.format(**self.conf))
 	def hostapdStart(self, path="/etc/hostapd/hostapd.conf"):
 		with open(path, 'w') as fd:
-			conf  = "bssid={MAC}\n"
-			conf += "ssid={SSID}\n"
-			conf += "interface={NIC}\n"
-			conf += "channel={CHANNEL}\n"
-			conf += "driver={DRIVER}\n"
+			conf = """
+				bssid={MAC}
+				ssid={SSID}
+				interface={NIC}
+				channel={CHANNEL}
+				driver={DRIVER}
+			"""
 			fd.write(conf.format(**self.conf))
 
 		self.service("hostapd")
 	def dnsmasqStart(self, path="/etc/dnsmasq.conf"):
 		with open(path, 'w') as fd:
-			conf  = "dhcp-leasefile=/tmp/dnsmasq.lease\n"
-			conf += "interface={NIC}\n"
-			conf += "dhcp-range={DHCP_RANGE},12h\n"	# DHCP IP range
-			conf += "dhcp-option=1,255.255.255.0\n"	# subnet mask
-			conf += "dhcp-option=28,{BROADCAST}\n"	# broadcast
-			conf += "dhcp-option=3,{IP}\n"			# default gateway
-			conf += "dhcp-option=6,{IP}\n"			# DNS
+			conf  = """
+				dhcp-leasefile=/tmp/dnsmasq.lease
+				interface={NIC}
+				dhcp-range={DHCP_RANGE},12h	# DHCP IP range
+				dhcp-option=1,255.255.255.0	# subnet mask
+				dhcp-option=28,{BROADCAST}	# broadcast
+				dhcp-option=3,{IP}			# default gateway
+				dhcp-option=6,{IP}			# DNS
+			"""
 			fd.write(conf.format(**self.conf))
 		self.service('dnsmasq')
 	def service(self, name, start=True):
@@ -147,7 +169,10 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(description="SHIT AP tools")
 	_a = parser.add_argument
-	_a("action", choices=['start', 'stop', 'scan'])
+	_a("-c", "--client", default=False, action='store_true',
+		help="client mode")
+	_a("action", choices=['start', 'stop', 'scan'],
+		help="")
 	args = parser.parse_args()
 
 	ap = SHIT_AP()

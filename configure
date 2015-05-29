@@ -46,6 +46,11 @@ check_bin_or_install() {
 	check "${bin}" "${BIN}"
 }
 
+if [ x"${PREFIX}" = x"" ]; then
+	PREFIX=/usr/local
+fi
+check prefix ${PREFIX}
+
 INSTALL_TOOL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null || which yum 2>/dev/null)
 check install_tool ${INSTALL_TOOL}
 if [ x"$(echo ${INSTALL_TOOL} | grep apt-get)" != x"" ]; then
@@ -68,8 +73,10 @@ SERVICE_TOOL=$(basename ${SERVICE_TOOL})
 
 ## Extra necessary package
 check_bin_or_install make
+check_bin_or_install install
 check_bin_or_install iw
 check_bin_or_install iwconfig wireless_tools
+check_bin_or_install wpa_supplicant
 check_bin_or_install crontab
 check_bin_or_install python2 python
 check_bin_or_install scapy python-scapy
@@ -100,6 +107,7 @@ sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
 
 ## Generate the fakeAP.conf
 cp fakeAP.conf.example fakeAP.conf
+chmod 666 fakeAP.conf
 sed -i "s/MACPREFIX=.*/MACPREFIX=\"${MACPREFIX}\"/g"	fakeAP.conf
 sed -i "s/@INSTALL@/${INSTALL}/g"						fakeAP.conf
 sed -i "s/@UPDATE@/${UPDATE}/g"							fakeAP.conf
