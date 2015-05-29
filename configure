@@ -62,6 +62,10 @@ elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
 	UPGRADE="yum upgrade"
 fi
 
+SERVICE_TOOL=$(which systemctl 2>/dev/null || which service 2>/dev/null)
+check service ${SERVICE_TOOL}
+SERVICE_TOOL=$(basename ${SERVICE_TOOL})
+
 ## Extra necessary package
 check_bin_or_install make
 check_bin_or_install iw
@@ -96,7 +100,11 @@ sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
 
 ## Generate the fakeAP.conf
 cp fakeAP.conf.example fakeAP.conf
-sed -i "s/MACPREFIX=.*/MACPREFIX=\"${MACPREFIX}\"/g" fakeAP.conf
+sed -i "s/MACPREFIX=.*/MACPREFIX=\"${MACPREFIX}\"/g"	fakeAP.conf
+sed -i "s/@INSTALL@/${INSTALL}/g"						fakeAP.conf
+sed -i "s/@UPDATE@/${UPDATE}/g"							fakeAP.conf
+sed -i "s/@UPGRADE@/${UPGRADE}/g"						fakeAP.conf
+sed -i "s/@SERVICE_TOOL@/${SERVICE_TOOL}/g"			fakeAP.conf
 
 end=`date +%s`
 echo 'configure' finished successfully \($(date -d @$((end-start)) -u +%Mm:%Ss)\)

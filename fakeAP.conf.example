@@ -1,6 +1,9 @@
 
 ## System setting
-INSTALL=
+INSTALL=@INSTALL@
+UPDATE=@UPDATE@
+UPGRADE=@UPGRADE@
+SERVICE_TOOL=@SERVICE_TOOL@
 
 ## WiFI dongle setting
 SSID="RPi2"
