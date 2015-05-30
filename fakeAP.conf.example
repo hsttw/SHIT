@@ -15,4 +15,10 @@ DRIVER=nl80211
 ## Log setting
 KEYWORD=user,passwd
 
+
+## Wilreless configure
+TGT_SSID=
+TGT_PROTO=
+TGT_PSK=
+
 # vim: set ft=sh:
