@@ -20,9 +20,12 @@ class SHIT_AP(object):
 			self.NAT(start=True)
 			self.ipSet()
 	def stop(self, args):
-		for serv in ("hostapd", "dnsmasq"):
-			self.service(serv, start=False)
-		self.NAT(start=False)
+		if args.client:
+			self.wpa_supplicantStop()
+		else:
+			for serv in ("hostapd", "dnsmasq"):
+				self.service(serv, start=False)
+			self.NAT(start=False)
 	def scan(self, args):
 		result = self._scan_(args)
 		for idx, ret in enumerate(result):
@@ -53,17 +56,18 @@ class SHIT_AP(object):
 		result = sorted(result, key=lambda x: x[3])
 		return result
 
-	def wpa_supplicantStart(self, path="/etc/wpa_supplicant.conf"):
+	def wpa_supplicantStart(self, path="/etc/wpa_supplicant/wpa_supplicant.conf"):
+		import commands
+
 		conf = """
 			ctrl_interface=/var/run/wpa_supplicant
-
 			network={{
 				ssid="{TGT_SSID}"
 				key_mgmt=WPA-PSK
 				proto={TGT_PROTO}
 				pairwise=CCMP
 				group=CCMP
-				psk={TGT_PSK}
+				psk="{TGT_PSK}"
 			}}
 		"""
 
@@ -71,6 +75,15 @@ class SHIT_AP(object):
 			conf = conf.format(**self.conf)
 			conf = "\n".join([_.strip() for _ in conf.split('\n')])
 			fd.write(conf)
+
+		cmd = "wpa_supplicant -B -i{0[NAME]} -c {1}".format(self.ScanWiFi, path)
+		commands.getoutput(cmd)
+	def wpa_supplicantStop(self):
+		import commands, os
+
+		ret = commands.getoutput("ps aux | grep wpa_supplicant | grep -v grep | awk '{print $2}'")
+		for pid in [_ for _ in ret.split('\n') if _]:
+			os.kill(int(pid), 9)
 	def hostapdStart(self, path="/etc/hostapd/hostapd.conf"):
 		conf = """
 			bssid={MAC}
@@ -196,6 +209,7 @@ class SHIT_AP(object):
 			elif ret[tmp] <= ret[_]:
 				tmp = _
 		return tmp
+
 if __name__ == '__main__':
 	import argparse, os
 
@@ -207,8 +221,9 @@ if __name__ == '__main__':
 	_a("-c", "--client", default=False, action='store_true',
 		help="client mode")
 	_a("action", choices=['start', 'stop', 'scan'],
-		help="")
+		help="action mode")
 	args = parser.parse_args()
 
 	ap = SHIT_AP()
 	ap(args.action, args)
+
