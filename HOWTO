@@ -1,0 +1,18 @@
+# HOWTO #
+
+如何使用 SHIT (Steven Hack Into This) 這個 Project。首先，
+
++ Step 1 - ./configure
++ Step 2 - make
++ Step 3 - make install
+
+接下來就有各種工具可以使用
+
+
+## fakeAP ##
+
+fakeAP 提供基本 WiFi 的各種工具，包含
+
++ WiFi AP 功能
++ WiFi client 連到其他 WiFi AP
+
