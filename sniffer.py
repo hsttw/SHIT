@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#! Copyright (C) 2015-2015 Hack Stuff. All right reserved.
+#
+# Author : 2015/05 cmj<cmj@cmj.tw>
 
 import os
 import sys

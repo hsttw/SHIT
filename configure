@@ -84,6 +84,7 @@ check_bin_or_install git
 check_bin_or_install hostapd
 check_bin_or_install dnsmasq
 check_bin_or_install vim
+check_bin_or_install tcpdump
 
 ## Check the valid WiFi dongle
 validWiFiDongle() {
