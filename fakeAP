@@ -98,6 +98,16 @@ class SHIT_AP(object):
 			conf = "\n".join([_.strip() for _ in conf.split('\n')])
 			fd.write(conf)
 
+		## In the Kali case, default hostapd configure is not setting
+		if os.path.isfile("/etc/default/hostapd"):
+			import re
+
+			with open("/etc/default/hostapd") as fd:
+				data = fd.read()
+			data = re.sub(r'#DAEMON_CONF=""', r'DAEMON_CONF="{0}"'.format(path), data)
+			with open("/etc/default/hostapd", 'w') as fd:
+				fd.write(data)
+
 		self.service("hostapd")
 	def dnsmasqStart(self, path="/etc/dnsmasq.conf"):
 		conf  = """
