@@ -5,6 +5,7 @@
 
 
 class Steven5538(object):
+	FMT = "{0:<10} - {1.src:16} => {1.dst:16} - {2:.32}"
 	def __init__(self, args):
 		self.conf  = args.config
 		self.iface = args.iface if args.iface else self.APWiFi['NAME']
@@ -22,7 +23,7 @@ class Steven5538(object):
 			return False
 
 		dns = pkg.payload
-		print "DNS - {0.src} => {0.dst} [{1.qd.qname}]".format(pkg.payload, dns)
+		print self.FMT.format("DNS", pkg.payload, dns.qd.qname)
 		return True
 	def PKG_03Telnet(self, pkg):
 		""" Sniffer the BBS (Telnet) query """
@@ -33,10 +34,11 @@ class Steven5538(object):
 		if 'TCP' != tcp.name or 23 != tcp.dport:
 			return False
 
-		print "BBS - {0.src} => {0.dst} [{1}]".format(pkg.payload, tcp.payload)
+		print self.FMT.format("BBS", pkg.payload, tcp.payload)
 		return True
-	def PKG_04HTTPGet(self, pkg):
+	def PKG_04HTTP(self, pkg):
 		""" Sniffer the BBS (Telnet) query """
+		import re
 
 		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
@@ -46,7 +48,12 @@ class Steven5538(object):
 		elif not tcp.payload:
 			return False
 
-		print "HTTP (GET) - {0.src} => {0.dst} [{1}]".format(pkg.payload, tcp.payload)
+		## Simplifer - Get the HTTP/GET header only
+		if re.match(r'GET (\S+) HTTP/1.1', tcp.payload.load):
+			get = re.search(r'GET (\S+) HTTP/1.1', tcp.payload.load).group(1)
+			print self.FMT.format("HTTP (GET)", pkg.payload, get)
+		elif re.match(r'POST (\S+) HTTP/1.1', tcp.payload.load):
+			print self.FMT.format("HTTP (POST)", pkg.payload, tcp.payload)
 		return True
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
