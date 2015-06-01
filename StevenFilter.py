@@ -13,6 +13,8 @@ class Steven5538(object):
 		sniff(iface=self.iface, filter=self.filter, prn=self.handler, store=0)
 
 	def PKG_02DNS(self, pkg):
+		""" Sniffer the DNS query """
+
 		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		udp = pkg.payload.payload
@@ -21,7 +23,17 @@ class Steven5538(object):
 		dns = pkg.payload
 		print "DNS - {0.src} => {0.dst} [{1.qd.qname}]".format(pkg.payload, dns)
 		return True
+	def PKG_03Telnet(self, pkg):
+		""" Sniffer the BBS (Telnet) query """
 
+		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+			return False
+		tcp = pkg.payload.payload
+		if 'TCP' != tcp.name or 23 != tcp.dport:
+			return False
+
+		print "BBS - {0.src} => {0.dst} [{1}]".format(pkg.payload, tcp.payload)
+		return True
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
 		return True
