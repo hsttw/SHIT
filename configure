@@ -10,6 +10,16 @@ if [ `id -u` != 0 ]; then
 	exit -1
 fi
 
+findBin() {
+	for bin in ${@}
+	do
+		ret=$(which ${bin} 2>/dev/null)
+		if [ x"${ret}" != x"" ]; then
+			echo ${ret}
+			return
+		fi
+	done
+}
 check() {
 	if [ x"$2" = x"" ]; then
 		printf "Check %s not found\n" $1
@@ -45,13 +55,23 @@ check_bin_or_install() {
 	fi
 	check "${bin}" "${BIN}"
 }
+check_python_llib_or_install() {
+	pkg="$1"
+	path=$(python2 -c "import ${pkg}; print ${pkg}" 2>/dev/null | cut -d "'" -f 4)
+	if [ x"${path}" = x"" ]; then
+		$(which pip2) install ${pkg} >/dev/null 2>&1
+	fi
+
+	path=$(python2 -c "import ${pkg}; print ${pkg}" 2>/dev/null | cut -d "'" -f 4)
+	check ${pkg}
+}
 
 if [ x"${PREFIX}" = x"" ]; then
 	PREFIX=/usr/local
 fi
 check prefix ${PREFIX}
 
-INSTALL_TOOL=$(which apt-get 2>/dev/null || which pacman 2>/dev/null || which yum 2>/dev/null)
+INSTALL_TOOL=$(findBin apt-get pacman yuim brew)
 check install_tool ${INSTALL_TOOL}
 if [ x"$(echo ${INSTALL_TOOL} | grep apt-get)" != x"" ]; then
 	INSTALL="apt-get install -y"
@@ -65,9 +85,13 @@ elif [ x"$(echo ${INSTALL_TOOL} | grep yum)" != x"" ]; then
 	INSTALL="yum install"
 	UPDATE="yum -y update"
 	UPGRADE="yum upgrade"
+elif [ x"$(echo ${INSTALL_TOOL} | grep brew)" != x"" ]; then
+	INSTALL="brew install"
+	UPDATE="brew update"
+	UPGRADE="brew upgrade"
 fi
 
-SERVICE_TOOL=$(which systemctl 2>/dev/null || which service 2>/dev/null)
+SERVICE_TOOL=$(findBin systemctl service launchctl)
 check service ${SERVICE_TOOL}
 SERVICE_TOOL=$(basename ${SERVICE_TOOL})
 
@@ -85,6 +109,10 @@ check_bin_or_install hostapd
 check_bin_or_install dnsmasq
 check_bin_or_install vim
 check_bin_or_install tcpdump
+check_bin_or_install pip2 python2-pip python-pip
+
+check_python_llib_or_install flask
+
 
 ## Check the valid WiFi dongle
 validWiFiDongle() {
