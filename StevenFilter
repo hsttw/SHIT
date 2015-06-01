@@ -18,8 +18,9 @@ class Steven5538(object):
 		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		udp = pkg.payload.payload
-		if 'UDP' != udp.name or 'DNS' != udp.payload.name:
+		if 'UDP' != udp.name or 53 != udp.dport:
 			return False
+
 		dns = pkg.payload
 		print "DNS - {0.src} => {0.dst} [{1.qd.qname}]".format(pkg.payload, dns)
 		return True
@@ -33,6 +34,19 @@ class Steven5538(object):
 			return False
 
 		print "BBS - {0.src} => {0.dst} [{1}]".format(pkg.payload, tcp.payload)
+		return True
+	def PKG_04HTTPGet(self, pkg):
+		""" Sniffer the BBS (Telnet) query """
+
+		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+			return False
+		tcp = pkg.payload.payload
+		if 'TCP' != tcp.name or 80 != tcp.dport :
+			return False
+		elif not tcp.payload:
+			return False
+
+		print "HTTP (GET) - {0.src} => {0.dst} [{1}]".format(pkg.payload, tcp.payload)
 		return True
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
