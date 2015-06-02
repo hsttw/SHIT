@@ -3,11 +3,26 @@
 #
 # Author : 2015/05 cmj<cmj@cmj.tw>
 
+from multiprocessing import Process
+from flask import Flask
+from flask_restful import Resource, Api
+
+class StevenServer(Resource):
+	""" StevenServer - The Flask server used in SHIT, connected via Queue """
+
+	def get(self):
+		return "SHIT - Steven Hack Into This %s" %self.queue
+
 class Steven5538(object):
+	""" Steven5538 - The package filter used in SHIT """
+
 	FMT = "{0:<10} - {1.src:16} => {1.dst:16} - {2:.32}"
 	def __init__(self, args):
 		self.conf  = args.config
 		self.iface = args.iface if args.iface else self.APWiFi['NAME']
+
+		if args.flask:
+			self.queue = Queue.Queue()
 	def __call__(self):
 		""" Run all sniffer backend """
 		import select
@@ -144,8 +159,14 @@ if __name__ == '__main__':
 	_a = parser.add_argument
 	_a("-d", "--debug", action="store_true", default=False,
 		help="Enable debug message")
+	_a("-f", "--flask", action="store_true", default=False,
+		help="Run Flask server")
 	_a("-i", "--iface",
 		help="Interface you want to sinffer.")
+	_a("-a", "--addr", default="0.0.0.0",
+		help="Bind host address for SS")
+	_a("-p", "--port", default=5538,
+		help="Bind the port number for SS")
 	_a("-c", "--config", default="fakeAP.conf",
 		help="Configure")
 
@@ -156,12 +177,33 @@ if __name__ == '__main__':
 	logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 	from scapy.all import *
 
-
-	## Start sniffer
+	## Prepare the SIGHUP handler
 	steven5538 = Steven5538(args)
 	def reloadSteven5538(signum, frame):
 		global steven5538
 		steven5538.conf = args.config
 	signal.signal(signal.SIGHUP, reloadSteven5538)
-	steven5538()
+
+	## Start sniffer and Flask server
+	try:
+		if args.flask:
+			app = Flask(__name__)
+			api = Api(app)
+
+			StevenServer.queue = steven5538.queue
+			api.add_resource(StevenServer, '/')
+			param = {'debug': args.debug, 'host': args.addr, 'port': args.port}
+			proc = Process(target=app.run, kwargs=param)
+			proc.start()
+
+			if not proc.is_alive():
+				raise SystemError("SS is not start")
+
+		steven5538()
+	except KeyboardInterrupt as e:
+		if args.flask:
+			proc.terminate()
+	finally:
+		if args.flask and proc.is_alive():
+			proc.join()
 
