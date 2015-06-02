@@ -59,11 +59,12 @@ check_python_llib_or_install() {
 	pkg="$1"
 	path=$(python2 -c "import ${pkg}; print ${pkg}" 2>/dev/null | cut -d "'" -f 4)
 	if [ x"${path}" = x"" ]; then
+		echo $(which pip2) install ${pkg}
 		$(which pip2) install ${pkg} >/dev/null 2>&1
 	fi
 
 	path=$(python2 -c "import ${pkg}; print ${pkg}" 2>/dev/null | cut -d "'" -f 4)
-	check ${pkg}
+	check ${pkg} ${path}
 }
 
 if [ x"${PREFIX}" = x"" ]; then
