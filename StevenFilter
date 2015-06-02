@@ -3,7 +3,6 @@
 #
 # Author : 2015/05 cmj<cmj@cmj.tw>
 
-
 class Steven5538(object):
 	FMT = "{0:<10} - {1.src:16} => {1.dst:16} - {2:.32}"
 	def __init__(self, args):
@@ -11,7 +10,13 @@ class Steven5538(object):
 		self.iface = args.iface if args.iface else self.APWiFi['NAME']
 	def __call__(self):
 		""" Run all sniffer backend """
-		sniff(iface=self.iface, filter=self.filter, prn=self.handler, store=0)
+		import select
+
+		while True:
+			try:
+				sniff(iface=self.iface, filter=self.filter, prn=self.handler, store=0)
+			except select.error as e:
+				continue
 
 	def PKG_01ARP(self, pkg):
 		""" Sniffer the ARP query """
@@ -127,14 +132,18 @@ class Steven5538(object):
 					return self._APWiFi_
 		else:
 			return None
+
 if __name__ == '__main__':
 	import argparse, os, sys
+	import signal
 
 	if os.getuid() and os.geteuid():
 		exit("You need to be root!")
 
 	parser = argparse.ArgumentParser(description="Steven Tool")
 	_a = parser.add_argument
+	_a("-d", "--debug", action="store_true", default=False,
+		help="Enable debug message")
 	_a("-i", "--iface",
 		help="Interface you want to sinffer.")
 	_a("-c", "--config", default="fakeAP.conf",
@@ -147,6 +156,12 @@ if __name__ == '__main__':
 	logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 	from scapy.all import *
 
+
 	## Start sniffer
 	steven5538 = Steven5538(args)
+	def reloadSteven5538(signum, frame):
+		global steven5538
+		steven5538.conf = args.config
+	signal.signal(signal.SIGHUP, reloadSteven5538)
 	steven5538()
+
