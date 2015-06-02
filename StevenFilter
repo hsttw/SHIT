@@ -13,10 +13,23 @@ class Steven5538(object):
 		""" Run all sniffer backend """
 		sniff(iface=self.iface, filter=self.filter, prn=self.handler, store=0)
 
+	def PKG_01ARP(self, pkg):
+		""" Sniffer the ARP query """
+
+		if 'stopARP' in self.conf and self.conf['stopARP']:
+			return True
+		elif 'Ethernet' != pkg.name or 'ARP' != pkg.payload.name:
+			return False
+
+		FMT = "{0:<10} - {1.psrc:16} ({1.hwsrc}) => {1.pdst:16} ({1.hwdst})"
+		print FMT.format("ARP", pkg.payload)
+		return True
 	def PKG_02DNS(self, pkg):
 		""" Sniffer the DNS query """
 
-		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+		if 'stopDNS' in self.conf and self.conf['stopDNS']:
+			return True
+		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		udp = pkg.payload.payload
 		if 'UDP' != udp.name or 53 != udp.dport:
@@ -28,7 +41,9 @@ class Steven5538(object):
 	def PKG_03Telnet(self, pkg):
 		""" Sniffer the BBS (Telnet) query """
 
-		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+		if 'stopTelnet' in self.conf and self.conf['stopTelnet']:
+			return True
+		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		tcp = pkg.payload.payload
 		if 'TCP' != tcp.name or 23 != tcp.dport:
@@ -40,7 +55,9 @@ class Steven5538(object):
 		""" Sniffer the BBS (Telnet) query """
 		import re
 
-		if 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+		if 'stopHTTP' in self.conf and self.conf['stopHTTP']:
+			return True
+		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		tcp = pkg.payload.payload
 		if 'TCP' != tcp.name or 80 != tcp.dport :
@@ -69,7 +86,9 @@ class Steven5538(object):
 		"""
 		def _hander_(pkg):
 			for _ in sorted(dir(self)):
-				if _.startswith(prefix) and getattr(self, _)(pkg):
+				if 'stopSniff' in self.conf and self.conf['stopSniff']:
+					break
+				elif _.startswith(prefix) and getattr(self, _)(pkg):
 					break
 		return _hander_
 	@property

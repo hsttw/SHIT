@@ -21,4 +21,11 @@ TGT_SSID=
 TGT_PROTO=
 TGT_PSK=
 
+## Sinffer options
+stopSniff=
+stopARP=1
+stopDNS=
+stopTelnet=
+stopHTTP=
+
 # vim: set ft=sh:
