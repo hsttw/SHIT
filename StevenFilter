@@ -4,25 +4,37 @@
 # Author : 2015/05 cmj<cmj@cmj.tw>
 
 from multiprocessing import Process
+from multiprocessing import Queue as QUEUE	## Since scapy using Queue.py
 from flask import Flask
 from flask_restful import Resource, Api
 
 class StevenServer(Resource):
 	""" StevenServer - The Flask server used in SHIT, connected via Queue """
 
-	def get(self):
-		return "SHIT - Steven Hack Into This %s" %self.queue
+	def get(self, src):
+		import json
+
+		try:
+			queue = self.queue
+			data = []
+			print queue
+			while queue.qsize():
+				data.append(queue.get())
+			data = json.dumps(data)
+		except Exception as e:
+			data = "resource ({0}) not found {1}".format(src, e)
+
+		return "SHIT - Steven Hack Into This : {0}".format(data)
 
 class Steven5538(object):
 	""" Steven5538 - The package filter used in SHIT """
 
 	FMT = "{0:<10} - {1.src:16} => {1.dst:16} - {2:.32}"
+	SRC = ['arp', 'dns', 'telnet', 'http']
 	def __init__(self, args):
 		self.conf  = args.config
 		self.iface = args.iface if args.iface else self.APWiFi['NAME']
-
-		if args.flask:
-			self.queue = Queue.Queue()
+		self.args  = args
 	def __call__(self):
 		""" Run all sniffer backend """
 		import select
@@ -43,7 +55,8 @@ class Steven5538(object):
 			return False
 
 		FMT = "{0:<10} - {1.psrc:16} ({1.hwsrc}) => {1.pdst:16} ({1.hwdst})"
-		print FMT.format("ARP", pkg.payload)
+		ret = FMT.format("ARP", pkg.payload)
+		self.queue = 'arp', ret
 		return True
 	def PKG_02DNS(self, pkg):
 		""" Sniffer the DNS query """
@@ -57,7 +70,9 @@ class Steven5538(object):
 			return False
 
 		dns = pkg.payload
-		print self.FMT.format("DNS", pkg.payload, dns.qd.qname)
+		ret = self.FMT.format("DNS", pkg.payload, dns.qd.qname)
+		print ret
+		self.queue = 'dns', ret
 		return True
 	def PKG_03Telnet(self, pkg):
 		""" Sniffer the BBS (Telnet) query """
@@ -70,7 +85,9 @@ class Steven5538(object):
 		if 'TCP' != tcp.name or 23 != tcp.dport:
 			return False
 
-		print self.FMT.format("BBS", pkg.payload, tcp.payload)
+		ret = self.FMT.format("BBS", pkg.payload, tcp.payload)
+		print ret
+		self.queue = 'telnet', ret
 		return True
 	def PKG_04HTTP(self, pkg):
 		""" Sniffer the BBS (Telnet) query """
@@ -89,9 +106,13 @@ class Steven5538(object):
 		## Simplifer - Get the HTTP/GET header only
 		if re.match(r'GET (\S+) HTTP/1.1', tcp.payload.load):
 			get = re.search(r'GET (\S+) HTTP/1.1', tcp.payload.load).group(1)
-			print self.FMT.format("HTTP (GET)", pkg.payload, get)
+			ret = self.FMT.format("HTTP (GET)", pkg.payload, get)
 		elif re.match(r'POST (\S+) HTTP/1.1', tcp.payload.load):
-			print self.FMT.format("HTTP (POST)", pkg.payload, tcp.payload)
+			ret = self.FMT.format("HTTP (POST)", pkg.payload, tcp.payload)
+		else:
+			return False
+		print ret
+		self.queue = 'http', ret
 		return True
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
@@ -148,6 +169,17 @@ class Steven5538(object):
 					return self._APWiFi_
 		else:
 			return None
+	@property
+	def queue(self):
+		if self.args.flask:
+			if not hasattr(self, '_queue_') :
+				self._queue_ = {_: QUEUE() for _ in self.SRC}
+			return self._queue_
+	@queue.setter
+	def queue(self, v):
+		if self.args.flask:
+			proto, data = v
+			self._queue_[proto].put(data)
 
 if __name__ == '__main__':
 	import argparse, os, sys
@@ -192,7 +224,7 @@ if __name__ == '__main__':
 			api = Api(app)
 
 			StevenServer.queue = steven5538.queue
-			api.add_resource(StevenServer, '/')
+			api.add_resource(StevenServer, '/webapi/<src>')
 			param = {'debug': args.debug, 'host': args.addr, 'port': args.port}
 			proc = Process(target=app.run, kwargs=param)
 			proc.start()
