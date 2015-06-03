@@ -27,6 +27,7 @@ class Steven5538(object):
 		""" Run all sniffer backend """
 		import select
 
+		print "Start SF ..."
 		while True:
 			try:
 				sniff(iface=self.iface, filter=self.filter, prn=self.handler, store=0)
@@ -37,7 +38,7 @@ class Steven5538(object):
 		""" Sniffer the ARP query """
 
 		if 'stopARP' in self.conf and self.conf['stopARP']:
-			return True
+			return False
 		elif 'Ethernet' != pkg.name or 'ARP' != pkg.payload.name:
 			return False
 
@@ -48,7 +49,7 @@ class Steven5538(object):
 		""" Sniffer the DNS query """
 
 		if 'stopDNS' in self.conf and self.conf['stopDNS']:
-			return True
+			return False
 		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		udp = pkg.payload.payload
@@ -62,7 +63,7 @@ class Steven5538(object):
 		""" Sniffer the BBS (Telnet) query """
 
 		if 'stopTelnet' in self.conf and self.conf['stopTelnet']:
-			return True
+			return False
 		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		tcp = pkg.payload.payload
@@ -76,7 +77,7 @@ class Steven5538(object):
 		import re
 
 		if 'stopHTTP' in self.conf and self.conf['stopHTTP']:
-			return True
+			return False
 		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		tcp = pkg.payload.payload
