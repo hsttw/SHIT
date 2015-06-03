@@ -25,7 +25,21 @@ class StevenServer(Resource):
 			data = "resource ({0}) not found {1}".format(src, e)
 
 		return "SHIT - Steven Hack Into This : {0}".format(data)
+class StevenCTL(Resource):
+	""" StevenCTL - The Flask server usedi in SHIT and control lower-end system """
+	def get(self, src):
+		import json
 
+		data = []
+		if 'client' == src:
+			with open('/tmp/dnsmasq.lease') as fd:
+				client = fd.read()
+			client = [_ for _ in client.split('\n') if _]
+			client = [_.split() for _ in client]
+			client = {_[3]: {'MAC': _[1], 'IP': _[2]} for _ in client}
+			data = json.dumps(client)
+
+		return "SHIT - Steven Hack Into This : {0}".format(data)
 class Steven5538(object):
 	""" Steven5538 - The package filter used in SHIT """
 
@@ -224,7 +238,8 @@ if __name__ == '__main__':
 			api = Api(app)
 
 			StevenServer.queue = steven5538.queue
-			api.add_resource(StevenServer, '/webapi/<src>')
+			api.add_resource(StevenServer, '/package/<src>')
+			api.add_resource(StevenCTL,    '/ctl/<src>')
 			param = {'debug': args.debug, 'host': args.addr, 'port': args.port}
 			proc = Process(target=app.run, kwargs=param)
 			proc.start()
