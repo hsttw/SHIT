@@ -85,6 +85,8 @@ class SHIT_AP(object):
 		for pid in [_ for _ in ret.split('\n') if _]:
 			os.kill(int(pid), 9)
 	def hostapdStart(self, path="/etc/hostapd/hostapd.conf"):
+		import commands, os
+
 		conf = """
 			bssid={MAC}
 			ssid={SSID}
@@ -107,6 +109,14 @@ class SHIT_AP(object):
 			data = re.sub(r'#DAEMON_CONF=""', r'DAEMON_CONF="{0}"'.format(path), data)
 			with open("/etc/default/hostapd", 'w') as fd:
 				fd.write(data)
+
+		## In some case, wpa_supplicant is start but we need to stop it
+		cmd = 'ps aux | grep wpa_supplicant | grep -v sh | grep {0}'.format(self.conf['NIC'])
+		ret = commands.getoutput(cmd)
+		ret = [_ for _ in ret.split('\n') if _]
+		if 1 == len(ret):
+			pid = ret[0].split()[1]
+			os.kill(int(pid), 9)
 
 		self.service("hostapd")
 	def dnsmasqStart(self, path="/etc/dnsmasq.conf"):
