@@ -12,6 +12,8 @@ class SHIT_AP(object):
 		getattr(self, action)(args)
 
 	def start(self, args):
+		if args.name:
+			self.conf['SSID'] = args.name
 		if args.client:
 			self.wpa_supplicantStart()
 		else:
@@ -240,6 +242,8 @@ if __name__ == '__main__':
 	_a = parser.add_argument
 	_a("-c", "--client", default=False, action='store_true',
 		help="client mode")
+	_a("-n", "--name", default="",
+		help="AP name.")
 	_a("action", choices=['start', 'stop', 'scan'],
 		help="action mode")
 	args = parser.parse_args()
