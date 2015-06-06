@@ -189,18 +189,20 @@ if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(description="Steven Tool")
 	_a = parser.add_argument
+	_a("-a", "--addr", default="0.0.0.0",
+		help="Bind host address for SS")
+	_a("-c", "--config", default="fakeAP.conf",
+		help="Configure")
 	_a("-d", "--debug", action="store_true", default=False,
 		help="Enable debug message")
 	_a("-f", "--flask", action="store_true", default=False,
 		help="Run Flask server")
 	_a("-i", "--iface",
 		help="Interface you want to sinffer.")
-	_a("-a", "--addr", default="0.0.0.0",
-		help="Bind host address for SS")
 	_a("-p", "--port", default=5538,
 		help="Bind the port number for SS")
-	_a("-c", "--config", default="fakeAP.conf",
-		help="Configure")
+	_a("-r", "--reload", action="store_true", default=False,
+		help="Reload SF")
 
 	args = parser.parse_args()
 
@@ -213,9 +215,14 @@ if __name__ == '__main__':
 	try:
 		with open(PIDFILE) as fd:
 			pid = fd.read()
-		os.kill(int(pid), 9)
+		if not args.reload:
+			os.kill(int(pid), 9)
 	except Exception as e:
 		pass
+
+	if args.reload:
+		os.kill(int(pid), signal.SIGHUP)
+		exit()
 
 	try:
 		with open(PIDFILE, 'w') as fd:
