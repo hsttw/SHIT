@@ -27,5 +27,6 @@ stopARP=1
 stopDNS=
 stopTelnet=
 stopHTTP=
+stopDebug=
 
 # vim: set ft=sh:
