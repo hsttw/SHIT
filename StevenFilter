@@ -127,7 +127,7 @@ class Steven5538(object):
 		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
 			return False
 		tcp = pkg.payload.payload
-		if 'TCP' != tcp.name or 80 != tcp.dport :
+		if 'TCP' != tcp.name or 80 not in (tcp.sport, tcp.dport):
 			return False
 		elif not tcp.payload:
 			return False
@@ -145,6 +145,8 @@ class Steven5538(object):
 		return True
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
+		if 'stopDebug' not in self.conf or not self.conf['stopDebug']:
+			print pkg.summary()
 		return True
 
 	@property
@@ -209,42 +211,6 @@ class Steven5538(object):
 		if self.args.flask:
 			self._queue_.put(v)
 
-def main(args):
-	""" Main function for StevenFilter """
-
-	## Prepare the SIGHUP handler
-	steven5538 = Steven5538(args)
-	def reloadSteven5538(signum, frame):
-		global steven5538
-		print "Reload ..."
-		steven5538.conf = args.config
-	signal.signal(signal.SIGHUP, reloadSteven5538)
-
-	## Start sniffer and Flask server
-	try:
-		if args.flask:
-			app = Flask(__name__)
-			api = Api(app)
-
-			StevenServer.queue = steven5538.queue
-			api.add_resource(StevenServer, '/package')
-			api.add_resource(StevenCTL,    '/ctl/<src>')
-			param = {'debug': args.debug, 'host': args.addr, 'port': args.port}
-			proc = Process(target=app.run, kwargs=param)
-			proc.start()
-
-			if not proc.is_alive():
-				raise SystemError("SS is not start")
-
-		steven5538()
-	except KeyboardInterrupt as e:
-		if args.flask:
-			proc.terminate()
-			proc.join()
-		raise
-	else:
-		if args.flask and proc.is_alive():
-			proc.join()
 if __name__ == '__main__':
 	import argparse, os, sys
 	import signal
@@ -286,7 +252,39 @@ if __name__ == '__main__':
 		with open(PIDFILE, 'w') as fd:
 			fd.write('{0}'.format(os.getpid()))
 
-		main(args)
+		## Prepare the SIGHUP handler
+		steven5538 = Steven5538(args)
+		def reloadSteven5538(signum, frame):
+			global steven5538
+			print "Reload ..."
+			steven5538.conf = args.config
+		signal.signal(signal.SIGHUP, reloadSteven5538)
+
+		## Start sniffer and Flask server
+		try:
+			if args.flask:
+				app = Flask(__name__)
+				api = Api(app)
+
+				StevenServer.queue = steven5538.queue
+				api.add_resource(StevenServer, '/package')
+				api.add_resource(StevenCTL,    '/ctl/<src>')
+				param = {'debug': args.debug, 'host': args.addr, 'port': args.port}
+				proc = Process(target=app.run, kwargs=param)
+				proc.start()
+
+				if not proc.is_alive():
+					raise SystemError("SS is not start")
+
+			steven5538()
+		except KeyboardInterrupt as e:
+			if args.flask:
+				proc.terminate()
+				proc.join()
+			raise
+		else:
+			if args.flask and proc.is_alive():
+				proc.join()
 	except Exception as e:
 		print e
 		raise
