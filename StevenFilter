@@ -112,6 +112,22 @@ class Steven5538(object):
 		print ret
 		self.queue = 'http', ret
 		return True
+	def PKG_05DHCP(self, pkg):
+		""" Sinffer the DHCP query """
+		if 'stopDHCP' in self.conf and self.conf['stopDHCP']:
+			return False
+		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+			return False
+		udp = pkg.payload.payload
+		if 'UDP' != udp.name or udp.dport not in (67, 68):
+			return False
+		elif not udp.payload:
+			return False
+
+		ret = self.FMT.format("DHCP", pkg.payload, '')
+		print ret
+		self.queue = 'dhcp', ret
+		return True
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
 		if 'stopDebug' not in self.conf or not self.conf['stopDebug']:
