@@ -24,7 +24,6 @@ a {
   color: #283040;
   text-decoration: none;
 }
-
 h1 {
   color: #ffffff;
   margin-bottom: 1em;
@@ -116,11 +115,15 @@ body.page-is-changing::after, body.page-is-changing::before {
 }
 
 main {
+  position: absolute;
+  top:0px;
+  left: 0px;
   height: 100vh;
-  padding: 10px;
+  width:100%;
+  /*padding: 10px;*/
   text-align: center;
 }
-main .cd-main-content {
+/*main .cd-main-content {
   position: relative;
   height: calc(100vh - 20px);
 }
@@ -129,16 +132,16 @@ main .cd-main-content > div {
   overflow: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-}
-main .cd-main-content::after, main .cd-main-content::before {
-  /* these are the 2 gradient overlay at the top and bottom of the .cd-main-content - to indicate that you can scroll */
+}*/
+/*main .cd-main-content::after, main .cd-main-content::before {
+   these are the 2 gradient overlay at the top and bottom of the .cd-main-content - to indicate that you can scroll
   content: '';
   position: absolute;
   left: 0;
   height: 50px;
   width: 100%;
 }
-main .cd-main-content::before {
+*/main .cd-main-content::before {
   top: 0;
 }
 main .cd-main-content::after {
@@ -173,7 +176,7 @@ main .cd-main-content.cd-about {
 main .cd-main-content.cd-about > div {
   padding-top: 50px;
 }
-/*main .cd-main-content.cd-about::after {
+main .cd-main-content.cd-about::after {
   background-color: rgba(40, 48, 64, 0);
   background-image: -webkit-linear-gradient(bottom, #283040, rgba(40, 48, 64, 0));
   background-image: linear-gradient(to top,#283040, rgba(40, 48, 64, 0));
@@ -183,7 +186,7 @@ main .cd-main-content.cd-about::before {
   background-image: -webkit-linear-gradient(top, #283040, rgba(40, 48, 64, 0));
   background-image: linear-gradient(to bottom,#283040, rgba(40, 48, 64, 0));
 }
-*/
+
 main p {
   width: 90%;
   max-width: 768px;
@@ -195,10 +198,10 @@ main p {
 }
 @media only screen and (min-width: 768px) {
   main {
-    padding: 20px;
+    /*padding: 20px;*/
   }
   main .cd-main-content {
-    height: calc(100vh - 40px);
+    height: 100vh;
   }
   main.cd-index > div {
     padding-top: 200px;
@@ -210,6 +213,10 @@ main p {
     font-size: 1.8rem;
     line-height: 2;
   }
+}
+
+h1 {
+  padding-top:60px;
 }
 
 .cd-cover-layer {
@@ -337,3 +344,42 @@ main p {
     width: calc(100% - 40px);
   }
 }
+
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+.cd-btn {
+  font-family: 'Montserrat', sans-serif;
+  display: inline-block;
+  padding: 1.4em 1.6em;
+  margin-bottom: 2em;
+  border-radius: 50em;
+  background-color: #283040;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  width:300px;
+  margin-top:20px;
+}
+
+.cd-input {
+  display: inline-block;
+  padding: 1em 1em;
+  margin-bottom: 0px;
+  border-radius: 10em;
+  color: black;
+  font-weight: bold;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  width:300px;
+}
+
+main .cd-main-content.cd-index {
+  background-color: black;
+  display: table;
+  width: 100%;
+}
+

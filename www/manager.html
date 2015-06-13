@@ -47,16 +47,7 @@
         </ul>
     </div>
     <div class="col-md-2">
-        <div class="user">
-            <div class="list-group">
-                <a href="#" class="list-group-item"
-                    mX="25.039065815333753" mY="121.56097412109375">iOS 00:0C:29:01:98:27</a>
-                <a href="#" class="list-group-item"
-                    mX="25.04151536540612" mY="121.56354904174805">Morbi leo risus</a>
-                <a href="#" class="list-group-item">Porta ac consectetur ac</a>
-                <a href="#" class="list-group-item">Vestibulum at eros</a>
-            </div>
-        </div>
+
     </div>
     <div class="col-md-8">
         <div class="row">
@@ -69,43 +60,6 @@
 
 
 <script>
-
-$('.user .list-group a.list-group-item').click(function () {
-    x = $(this).attr('mX');
-    y = $(this).attr('mY');
-    map.move(x, y);
-});
-
-var map = {
-
-    m: $(".map"),
-
-    move: function (x, y) {
-        this.m.tinyMap('panTo', [x, y]);
-        this.m.tinyMap('modify', {
-            zoom: 17
-        });
-    },
-
-};
-
-
-// demo
-$('.map').tinyMap({
-    'language': 'zh‐TW',
-    'center': ['25.039065815333753', '121.56097412109375'],
-    'zoom': 14,
-    'markerCluster': true,
-    'marker': [
-        {
-            'addr': ['25.039065815333753', '121.56097412109375'],
-            'text': '<strong>iOS 00:0C:29:01:98:27</strong>',
-            'id' : 'iOS'
-        },
-        {'addr': ['25.04151536540612', '121.56354904174805'], 'text': '<strong>iOS 00:0C:29:01:98:27</strong>'},
-        {'addr': ['25.041282077030896', '121.56741142272949'], 'text': '<strong>iOS 00:0C:29:01:98:27</strong>'}
-    ]
-});
 
 
 </script>
