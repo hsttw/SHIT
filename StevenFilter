@@ -128,6 +128,48 @@ class Steven5538(object):
 		print ret
 		self.queue = 'dhcp', ret
 		return True
+
+	def PKG_06FTP(self, pkg):
+		"""" Sniffer the FTP query """
+		if 'stopFTP' in self.conf and self.conf['stopFTP']:
+			return False
+		elif 'Ethernet' != pkg.name or 'IP' != pkg.payload.name:
+			return False
+
+		tcp = pkg.payload.payload
+		if 'TCP' != tcp.name or 21 != tcp.dport:
+			return False
+		elif not tcp.payload:
+			return False
+		
+		## Create the ftp stack for each src
+		if not hasattr(self, '_ftp_'):
+			self._ftp_ = {}
+
+		## HACK - Only record when first connection - SYN
+		src = pkg.payload.src
+		if 2 & tcp.flags:
+			self._ftp_[src] = ''
+
+		## FIXME - Should fix when first login will get extra 'vt100P'
+		if  str(tcp.payload).startswith('USER'):
+			ret = self.FMT.format("FTP", pkg.payload, tcp.payload)
+			print ret
+		if  str(tcp.payload).startswith('PASS'):
+			ret = self.FMT.format("FTP", pkg.payload, tcp.payload)
+			print ret
+		if tcp.payload and tcp.payload.load and src in self._ftp_:
+			self._ftp_[src] += ''.join([_ for _ in tcp.payload.load if _ in printable])
+			print self._ftp_[src]
+			'''
+			if 2 <= self._ftp_[src].count('\r\n'):
+				ret = self.FMT.format("FTP", pkg.payload, self._ftp_[src])
+				print "{0} / {1:.3}XXXXX".format(*ret.split('\r'))
+				self.queue = 'ftp', ret
+				del self._ftp_[src]
+			'''
+		return True
+
 	def PKG_99dump(self, pkg):
 		""" Default package handler, always run at-last """
 		if 'stopDebug' not in self.conf or not self.conf['stopDebug']:
