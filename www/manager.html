@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>fakeAP</title>
+    <script src="http://code.jquery.com/jquery-2.1.4.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Ubuntu+Condensed' rel='stylesheet' type='text/css'>
+    <script src="./lib/map/jquery.tinyMap.js"></script>
+</head>
+<body>
+
+<!-- navbar -->
+<nav class="navbar navbar-default hidden-print" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+
+            <a class="navbar-brand" href="/tinyMap/" data-url="gotop">HackStuff FakeAP</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li role="presentation" class="active"><a href="#">Notification <span class="badge">3</span></a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Setting <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a rel="me">set filter</a></li>
+                        <li><a rel="me">logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<!-- content Body -->
+
+<div class="container-fluid">
+<div class="row">
+    <div class="col-md-1">
+        <ul>
+            <li>User</li>
+            <li>Picture</li>
+            <li>History</li>
+            <li>statistical</li>
+        </ul>
+    </div>
+    <div class="col-md-2">
+        <div class="user">
+            <div class="list-group">
+                <a href="#" class="list-group-item"
+                    mX="25.039065815333753" mY="121.56097412109375">iOS 00:0C:29:01:98:27</a>
+                <a href="#" class="list-group-item"
+                    mX="25.04151536540612" mY="121.56354904174805">Morbi leo risus</a>
+                <a href="#" class="list-group-item">Porta ac consectetur ac</a>
+                <a href="#" class="list-group-item">Vestibulum at eros</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="row">
+            google map
+            <div class="map"></div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+<script>
+
+$('.user .list-group a.list-group-item').click(function () {
+    x = $(this).attr('mX');
+    y = $(this).attr('mY');
+    map.move(x, y);
+});
+
+var map = {
+
+    m: $(".map"),
+
+    move: function (x, y) {
+        this.m.tinyMap('panTo', [x, y]);
+        this.m.tinyMap('modify', {
+            zoom: 17
+        });
+    },
+
+};
+
+
+// demo
+$('.map').tinyMap({
+    'language': 'zh‐TW',
+    'center': ['25.039065815333753', '121.56097412109375'],
+    'zoom': 14,
+    'markerCluster': true,
+    'marker': [
+        {
+            'addr': ['25.039065815333753', '121.56097412109375'],
+            'text': '<strong>iOS 00:0C:29:01:98:27</strong>',
+            'id' : 'iOS'
+        },
+        {'addr': ['25.04151536540612', '121.56354904174805'], 'text': '<strong>iOS 00:0C:29:01:98:27</strong>'},
+        {'addr': ['25.041282077030896', '121.56741142272949'], 'text': '<strong>iOS 00:0C:29:01:98:27</strong>'}
+    ]
+});
+
+
+</script>
+
+<link rel="stylesheet" href="./lib/base.css">
+
+</body>
+</html>
