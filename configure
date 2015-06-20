@@ -98,18 +98,23 @@ SERVICE_TOOL=$(basename ${SERVICE_TOOL})
 ## Extra necessary package
 check_bin_or_install make
 check_bin_or_install install
-check_bin_or_install iw
-check_bin_or_install iwconfig wireless_tools
-check_bin_or_install wpa_supplicant
+if [ x`uname` != xDarwin  ]; then
+	check_bin_or_install iw
+	check_bin_or_install iwconfig wireless_tools
+	check_bin_or_install wpa_supplicant
+	check_bin_or_install hostapd
+	check_bin_or_install dnsmasq
+fi
 check_bin_or_install crontab
 check_bin_or_install python2 python
 check_bin_or_install scapy python-scapy
 check_bin_or_install git
-check_bin_or_install hostapd
-check_bin_or_install dnsmasq
 check_bin_or_install vim
 check_bin_or_install tcpdump
 check_bin_or_install pip2 python2-pip python-pip
+check_bin_or_install nginx
+check_bin_or_install php php5
+check_bin_or_install php-fpm
 
 check_python_llib_or_install flask
 check_python_llib_or_install flask_restful flask-restful
@@ -125,24 +130,35 @@ validWiFiDongle() {
 		fi
 	done
 }
-MACPREFIX=$(validWiFiDongle)
-check MACPREFIX "${MACPREFIX}"
-
+if [ x`uname` != xDarwin  ]; then
+	MACPREFIX=$(validWiFiDongle)
+	check MACPREFIX "${MACPREFIX}"
+fi
 
 ## Generate the Makefile.in
 cp Makefile.am Makefile.in
-sed -i "s/@INSTALL@/${INSTALL}/g"	Makefile.in
-sed -i "s/@UPDATE@/${UPDATE}/g"		Makefile.in
-sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
+if [ x`uname` != xDarwin  ]; then
+	sed -i "s/@INSTALL@/${INSTALL}/g"	Makefile.in
+	sed -i "s/@UPDATE@/${UPDATE}/g"		Makefile.in
+	sed -i "s/@UPGRADE@/${UPGRADE}/g"	Makefile.in
+fi
 
 ## Generate the fakeAP.conf
 cp fakeAP.conf.example fakeAP.conf
 chmod 666 fakeAP.conf
-sed -i "s/MACPREFIX=.*/MACPREFIX=\"${MACPREFIX}\"/g"	fakeAP.conf
-sed -i "s/@INSTALL@/${INSTALL}/g"						fakeAP.conf
-sed -i "s/@UPDATE@/${UPDATE}/g"							fakeAP.conf
-sed -i "s/@UPGRADE@/${UPGRADE}/g"						fakeAP.conf
-sed -i "s/@SERVICE_TOOL@/${SERVICE_TOOL}/g"			fakeAP.conf
+
+if [ x`uname` != xDarwin  ]; then
+	sed -i "s/MACPREFIX=.*/MACPREFIX=\"${MACPREFIX}\"/g"	fakeAP.conf
+	sed -i "s/@INSTALL@/${INSTALL}/g"						fakeAP.conf
+	sed -i "s/@UPDATE@/${UPDATE}/g"							fakeAP.conf
+	sed -i "s/@UPGRADE@/${UPGRADE}/g"						fakeAP.conf
+	sed -i "s/@SERVICE_TOOL@/${SERVICE_TOOL}/g"			fakeAP.conf
+fi
 
 end=`date +%s`
-echo 'configure' finished successfully \($(date -d @$((end-start)) -u +%Mm:%Ss)\)
+if [ x`uname` != xDarwin  ]; then
+	cost=$(date -d @$((end-start)) -u +%Mm:%Ss)
+else
+	cost="..."
+fi
+echo 'configure' finished successfully \(${cost}\)

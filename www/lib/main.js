@@ -1,6 +1,6 @@
 jQuery(document).ready(function(event){
 
-    var url = 'http://10.10.0.159/';
+    var url = 'http://shit.hst.tw/';
     var isAnimating = false,
     firstLoad = false;
 
