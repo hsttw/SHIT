@@ -118,7 +118,7 @@ check_bin_or_install php-fpm
 
 check_python_llib_or_install flask
 check_python_llib_or_install flask_restful flask-restful
-
+check_python_llib_or_install sqlalchemy
 
 ## Check the valid WiFi dongle
 validWiFiDongle() {
