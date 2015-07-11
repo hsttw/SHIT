@@ -46,7 +46,7 @@
 				}
 
 				if ($respond["status"] == "success") {
-					$select_stmt =  $db->prepare("select username, email, password, browser_agent, device_id, create_date from shit limit :start, :page_size");
+					$select_stmt =  $db->prepare("select id, username, email, password, browser_agent, device_id, create_date from shit limit :start, :page_size");
 					if (!$select_stmt) {
 						$respond["status"] = "failure";
 						$respond["msg"] = ($debug ? "select_stmt prepare failed: (" . $db->errorCode() . ") " . implode(",", $db->errorInfo()) : "error");
