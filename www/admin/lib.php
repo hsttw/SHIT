@@ -16,10 +16,14 @@
 
 	function verify_session($db, $session) {
 
+		if (is_null($session)) {
+			return false;
+		}
+
 		$valid_date = 1800; // 30分鐘
 		$result = true;
 		$now = date("Y-m-d H:i:s");
-		
+
 		$select_stmt = $db->prepare("select * from admin where session = :session");
 
 		if (!$select_stmt) {
