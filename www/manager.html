@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <title>fakeAP</title>
     <script src="http://code.jquery.com/jquery-2.1.4.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Bree+Serif' rel='stylesheet' type='text/css'>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-    <link href='http://fonts.googleapis.com/css?family=Ubuntu+Condensed' rel='stylesheet' type='text/css'>
-    <script src="./lib/map/jquery.tinyMap.js"></script>
+    <link rel="stylesheet" href="./lib/css/manager.css">
 </head>
 <body>
+
 
 <!-- navbar -->
 <nav class="navbar navbar-default hidden-print" role="navigation">
@@ -37,32 +38,181 @@
 <!-- content Body -->
 
 <div class="container-fluid">
-<div class="row">
-    <div class="col-md-1">
-        <ul>
-            <li>User</li>
-            <li>Picture</li>
-            <li>History</li>
-            <li>statistical</li>
-        </ul>
-    </div>
-    <div class="col-md-2">
-
-    </div>
-    <div class="col-md-8">
-        <div class="row">
-            google map
-            <div class="map"></div>
+    <div class="row">
+        <div class="col-md-1">
+            <ul>
+                <li>User</li>
+                <li>Picture</li>
+                <li>History</li>
+                <li>statistical</li>
+            </ul>
         </div>
+        <div class="col-md-7">
+
+
+            <div class="input-group">
+
+                <div class="col-lg-6" id="search_bar">
+                    <div class="input-group">
+                      <input type="text" class="form-control" aria-label="Text input with segmented button dropdown">
+                      <div class="input-group-btn">
+                        <button type="button" class="btn btn-default">Search</button>
+                      </div>
+                    </div>
+                </div>
+
+            </div><!-- /input-group -->
+
+            <div class="bs-glyphicons" id="conn_user">
+                <ul class="bs-glyphicons-list">
+                    <li>
+                        <code>00-90-27-10-60-53 / John / Password / Chrome v1.2 / 2015-01-01</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                    <li>
+                        <code>00-90-27-10-60-53</code>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+
+
+
+
+
+
+        <div class="col-md-4">
+
+            <div class="bs-callout bs-callout-warning" id="callout-dropdown-pull-right">
+
+                <div class="jumbotron">
+                    <h4><code>00-90-27-10-60-53</code></h4>
+
+                        <table class="table">
+                        <tbody>
+                          <tr>
+                            <th style="width:100px;" scope="row">username</th>
+                            <td>username</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">email</th>
+                            <td>Jacob</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">password</th>
+                            <td></td>
+                          </tr>
+                          <tr>
+                              <th scope="row">Agent</th>
+                              <td></td>
+                          </tr>
+                          <tr>
+                              <th scope="row">create_date</th>
+                              <td></td>
+                          </tr>
+
+                        </tbody>
+                        </table>
+
+
+                </div>
+            </div>
+        </div>
+
+
     </div>
 </div>
-</div>
 
-
-<script>
-
-
-</script>
 
 <link rel="stylesheet" href="./lib/base.css">
 

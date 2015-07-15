@@ -53,15 +53,15 @@ jQuery(document).ready(function(event){
     }
 
     $(window).on('popstate', function() {
-      	if( firstLoad ) {
+        if( firstLoad ) {
             var newPageArray = location.pathname.split('/'),
                 newPage = newPageArray[newPageArray.length - 1];
             if( !isAnimating ) changePage(newPage, false);
         }
         firstLoad = true;
-	});
+    });
 
-	function changePage(url, bool) {
+    function changePage(url, bool) {
         isAnimating = true;
         $('body').addClass('page-is-changing');
         $('.cd-loading-bar').one('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', function(){
@@ -73,9 +73,9 @@ jQuery(document).ready(function(event){
             $('.cd-loading-bar').off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend');
         });
         if( !transitionsSupported() ) loadNewContent(url, bool);
-	}
+    }
 
-	function loadNewContent(url) {
+    function loadNewContent(url) {
         location.replace(url);
     }
 
