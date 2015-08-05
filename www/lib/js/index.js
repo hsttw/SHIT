@@ -1,6 +1,6 @@
 jQuery(document).ready(function(event){
 
-    var url = 'http://shit.hst.tw/';
+    var url = 'http://localhost:9000/';
     var isAnimating = false,
     firstLoad = false;
 
@@ -32,21 +32,25 @@ jQuery(document).ready(function(event){
                     }
 
                     if (res.status == 'failure') {
-                        $('.error').text(res.msg);
+                        $('.error>h2').text(res.msg);
                         $('.error').show();
                     }
                 }
             });
-            loginSuccess();
+
 
         } else {
             $('.error').show();
         }
     });
 
-    function loginSuccess(k)
+    function loginSuccess(s)
     {
-        document.cookie = 'k='+k;
+        var now = new Date();
+        var time = now.getTime();
+        time += 3600 * 1000;
+        now.setTime(time);
+        document.cookie = 's='+s + '; expires=' + now.toUTCString() + '; path=/';
         var newPage = $('.cd-btn').attr('url');
         if( !isAnimating ) changePage(newPage, true);
         firstLoad = true;

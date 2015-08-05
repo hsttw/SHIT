@@ -383,3 +383,6 @@ main .cd-main-content.cd-index {
   width: 100%;
 }
 
+.error {
+  font-size: 17px;
+}
