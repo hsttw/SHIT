@@ -32,7 +32,7 @@ var xhr = $.ajax({
                     </li> \
                 ');
             });
-            $('#conn_user>.bs-glyphicons-list').append( items.join('') );
+            $('#conn_user>.bs-glyphicons-list').append(items.join(''));
             $( "#conn_user>.bs-glyphicons-list> li> code" ).click( function(e) {
                 $.ajax({
                     crossDomain: true,
@@ -45,9 +45,17 @@ var xhr = $.ajax({
                     success: function(res){
                         if (res.status == 'success') {
                             var itemss = [];
-                            $.each(res.content, function(i, item) {
-                                console.log(item);
+                            itemss.push('<table class="table"><tbody>');
+                            $.each(res.content[0], function(i, item) {
+                                itemss.push(' \
+                                    <tr> \
+                                        <th style="width:100px;" scope="row">'+i+'</th> \
+                                        <td>'+item+'</td> \
+                                    </tr> \
+                                ');
                             });
+                            itemss.push('</tbody></table>');
+                            $('.jumbotron').html(itemss.join(''));
                         }
                     }
                 });
