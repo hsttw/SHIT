@@ -110,7 +110,7 @@ class Steven5538(object):
 		elif not tcp.payload:
 			return False
 
-		payload = tcp.payload.load.encode('utf-8', 'ignore')
+		payload = tcp.payload.load
 		node = HTTP_RAW(src='{0}'.format(pkg.payload.src), dst='{0}'.format(pkg.payload.dst), payload='{0}'.format(payload))
 		self.db.add(node)
 		self.db.commit()
