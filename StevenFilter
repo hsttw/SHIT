@@ -7,23 +7,7 @@ from src.flask_backend import *
 from multiprocessing import Process
 from multiprocessing import Queue as QUEUE	## Since scapy using Queue.py
 
-
-from sqlalchemy import Column, String, Integer, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-Base = declarative_base()
-class SHIT_DB(Base):
-	__tablename__ = 'shit'
-
-	id = Column(Integer, primary_key=True)
-	username = Column(Text, primary_key=False)
-	password = Column(Text, primary_key=False)
-	url      = Column(Text, primary_key=False)
-
-engine = create_engine('sqlite:///backend/shit.db')
-Base.metadata.bind = engine
+from tables import MariaDB, HTTP_RAW
 
 class Steven5538(object):
 	""" Steven5538 - The package filter used in SHIT """
@@ -33,6 +17,7 @@ class Steven5538(object):
 		self.conf  = args.config
 		self.iface = args.iface if args.iface else self.APWiFi['NAME']
 		self.args  = args
+		self.db    = MariaDB("backend/shit.db")
 	def __call__(self):
 		""" Run all sniffer backend """
 		import select, os
@@ -125,16 +110,11 @@ class Steven5538(object):
 		elif not tcp.payload:
 			return False
 
-		## Simplifer - Get the HTTP/GET header only
-		if re.match(r'GET (\S+) HTTP/1.1', tcp.payload.load):
-			get = re.search(r'GET (\S+) HTTP/1.1', tcp.payload.load).group(1)
-			ret = self.FMT.format("HTTP (GET)", pkg.payload, get)
-		elif re.match(r'POST (\S+) HTTP/1.1', tcp.payload.load):
-			ret = self.FMT.format("HTTP (POST)", pkg.payload, tcp.payload)
-		else:
-			return False
-		print ret
-		self.queue = 'http', ret
+		payload = tcp.payload.load.encode('utf-8', 'ignore')
+		node = HTTP_RAW(src='{0}'.format(pkg.payload.src), dst='{0}'.format(pkg.payload.dst), payload='{0}'.format(payload))
+		self.db.add(node)
+		self.db.commit()
+
 		return True
 	def PKG_05DHCP(self, pkg):
 		""" Sinffer the DHCP query """
@@ -152,7 +132,6 @@ class Steven5538(object):
 		print ret
 		self.queue = 'dhcp', ret
 		return True
-
 	def PKG_06FTP(self, pkg):
 		"""" Sniffer the FTP query """
 		if 'stopFTP' in self.conf and self.conf['stopFTP']:
