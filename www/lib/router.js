@@ -5,7 +5,7 @@ console.log(param);
 var router = {
     '/' : 'index',
     '/index.html' : 'index',
-    '/manager.html' : 'manager',
+    '/history.html' : 'history',
 };
 
 if (typeof router[param] != 'undefined') {
