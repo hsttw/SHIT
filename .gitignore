@@ -6,3 +6,4 @@
 Makefile.in
 fakeAP.conf
 vendor/
+composer.lock

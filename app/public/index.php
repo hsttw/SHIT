@@ -7,17 +7,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
 $app->get('/', function () use ($app) {
-    if ($_SESSION['login'] == "true") {
-        return $app->redirect('/monitor');
+    if ($app['session']->get('user') == null) {
+        return $app->redirect('/login');
     }
-    return $app->redirect('/login');
+
+    return $app->redirect('/monitor');
 });
 
 $app->get('/login', function () use ($app) {
-    if ($_SESSION['login'] == "true") {
-        return $app->redirect('/monitor');
+    if ($app['session']->get('user') == null) {
+        return $app['twig']->render('login.twig');
     }
-    return $app['twig']->render('login.twig');
+
+    return $app->redirect('/monitor');
 });
 
 $app->post('/login', function (Request $request) use ($app) {
@@ -29,20 +31,23 @@ $app->post('/login', function (Request $request) use ($app) {
     $login = $app['db']->fetchAssoc($sql, [$username, $password]);
 
     if ($login) {
-        $_SESSION['login'] = "true";
-        $_SESSION['token'] = sha1(uniqid('hackstuff', true));
+        $app['session']->set('user', ['username' => $username]);
+        $app['session']->set('token', sha1(uniqid($username, true)));
         return $app->redirect('/monitor');
     } else {
         return $app->redirect('/login');
     }
 });
 
-$app->get('/logout', function () {
-    unset($_SESSION['login']);
+$app->get('/logout', function () use ($app) {
+    $app['session']->set('user', null);
     return $app->redirect('/');
 });
 
 $app->get('/monitor', function () use ($app) {
+    if ($app['session']->get('user') == null) {
+        return $app->redirect('/login');
+    }
 
     $sql  = "SELECT * FROM `http` ORDER BY timestamp ASC LIMIT 10";
     $http = $app['db']->fetchAll($sql);

@@ -4,7 +4,6 @@
         "silex/silex": "~1.3",
         "twig/twig": "^1.22",
         "components/jquery": "1.9.*",
-        "components/bootstrap": "^3.3",
         "doctrine/dbal": "~2.2"
     },
     "config": {
