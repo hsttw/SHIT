@@ -2,5 +2,7 @@
 *.pyc
 *.pyo
 
+.DS_Store
 Makefile.in
 fakeAP.conf
+vendor/

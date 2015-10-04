@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FakeAP - monitor</title>
+    <script src="/assets/jquery/jquery.min.js"></script>
+    <link href="/assets/css/monitor.css" media="all" rel="stylesheet" />
+</head>
+<body>
+    <div class="page">
+
+    <div class="main-nav-bar">
+        <div class="container">
+            <ul class="nav navbar-nav">
+                <li><a class=" active" href="/monitor/dataview">Data View</a></li>
+                <li><a href="/monitor/">Notification</a></li>
+            </ul>
+            <form accept-charset="UTF-8" action="#" class="search-form" method="get" onsubmit="return false;">
+                <div class="search-input-group">
+                <span class="icon-search"></span>
+                <input class="js-search form-control" id="query" name="query" placeholder="Search" required="required" type="text" tabindex="1">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="col-md-12 content">
+            {% for item in items %}
+            <div class="CodeRay">
+                <div class="code">
+<div class="CodeRay">
+  <div class="code"><pre><span class="prompt">$</span><span class="function"> {{item.src}} > {{item.dst}}
+</span><span class="string">
+</span><span class="string">{{item.payload}}
+</span>{{item.timestamp}}</pre></div>
+</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    </div>
+    <script>
+    $(document).ready(function(event) {
+        $("input#query").keypress(function(e){
+            code = (e.keyCode ? e.keyCode : e.which);
+            if (code == 13) {
+                console.log('not yet.')
+            }
+        });
+    });
+    </script>
+</body>
+</html>
