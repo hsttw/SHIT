@@ -8,7 +8,7 @@ $app->register(new Silex\Provider\TwigServiceProvider(), array(
 ));
 $app->register(new Silex\Provider\SessionServiceProvider());
 
-$dbpath = __DIR__.'/../../app.db';
+$dbpath = __DIR__.'/../../backend/shit.db';
 
 if (file_exists($dbpath)) {
     $app->register(new Silex\Provider\DoctrineServiceProvider(), [
