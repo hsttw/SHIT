@@ -54,6 +54,9 @@ def http_handler(packet):
 
             print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s %-4s %s%s" % ( packet[IP].src, packet[IP].dst, request_method , headers["host"], request_path )
 
+            if "User-Agent" in headers:
+                print "  \033[1;34m[DEVICE] \033[1;m" + headers["User-Agent"]
+
             if "Cookie" in headers:
                 dump_cookie(headers["Cookie"])
 
@@ -62,7 +65,7 @@ def http_handler(packet):
                     dump_info(request_param)
 
             elif request_method == "POST":
-                if headers["Content-Type"] == "application/x-www-form-urlencoded":
+                if headers.get("Content-Type") == "application/x-www-form-urlencoded":
                     dump_info(post_data)
         else:
             print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s RAW " % ( packet[IP].src, packet[IP].dst )
