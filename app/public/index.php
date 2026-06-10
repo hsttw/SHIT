@@ -10,6 +10,36 @@ function redirect(Response $res, string $to): Response
     return $res->withHeader('Location', $to)->withStatus(302);
 }
 
+/**
+ * Parse a dnsmasq DHCP lease file into the devices connected to the fake AP.
+ * Each line is "<expiry-epoch> <mac> <ip> <hostname> <client-id>". A missing or
+ * unreadable file yields an empty list rather than an error (the AP may not be
+ * running, e.g. on a dev box).
+ */
+function parse_leases(string $path): array
+{
+    if (!is_readable($path)) {
+        return [];
+    }
+
+    $devices = [];
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $f = preg_split('/\s+/', trim($line));
+        if (count($f) < 4) {
+            continue;
+        }
+        [$expiry, $mac, $ip, $host] = $f;
+        $devices[] = [
+            'mac'      => $mac,
+            'ip'       => $ip,
+            'hostname' => ($host === '*' ? '(unknown)' : $host),
+            'expiry'   => ctype_digit($expiry) ? date('Y-m-d H:i:s', (int) $expiry) : $expiry,
+        ];
+    }
+
+    return $devices;
+}
+
 $app->get('/', function (Request $req, Response $res) {
     return redirect($res, empty($_SESSION['user']) ? '/login' : '/monitor');
 });
@@ -53,6 +83,17 @@ $app->get('/monitor', function (Request $req, Response $res) use ($twig, $db) {
     $http = $db ? $db->fetchAllAssociative($sql) : [];
 
     $res->getBody()->write($twig->render('monitor.twig', ['items' => $http]));
+    return $res;
+});
+
+$app->get('/monitor/notification', function (Request $req, Response $res) use ($twig, $leaseFile) {
+    if (empty($_SESSION['user'])) {
+        return redirect($res, '/login');
+    }
+
+    $res->getBody()->write($twig->render('notification.twig', [
+        'devices' => parse_leases($leaseFile),
+    ]));
     return $res;
 });
 

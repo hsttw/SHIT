@@ -28,3 +28,7 @@ if (file_exists($dbpath)) {
         'path'   => $dbpath,
     ]);
 }
+
+// dnsmasq DHCP lease file. fakeAP's dnsmasqStart() pins this to /tmp/dnsmasq.lease;
+// overridable for dev/testing where the path differs.
+$leaseFile = getenv('SHIT_LEASE_FILE') ?: '/tmp/dnsmasq.lease';

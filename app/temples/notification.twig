@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FakeAP - notification</title>
+    <script src="/assets/jquery/jquery.min.js"></script>
+    <link href="/assets/css/monitor.css" media="all" rel="stylesheet" />
+</head>
+<body>
+    <div class="page">
+
+    <div class="main-nav-bar">
+        <div class="container">
+            <ul class="nav navbar-nav">
+                <li><a href="/monitor">Data View</a></li>
+                <li><a class=" active" href="/monitor/notification">Notification</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="col-md-12 content">
+            {% if devices is empty %}
+            <div class="CodeRay">
+                <div class="code"><pre>No connected device. (Is the fake AP running and serving DHCP?)</pre></div>
+            </div>
+            {% else %}
+            {% for d in devices %}
+            <div class="CodeRay">
+                <div class="code"><pre><span class="prompt">$</span><span class="function"> {{ d.hostname }}
+</span><span class="string">MAC : {{ d.mac }}
+IP  : {{ d.ip }}
+</span>lease until {{ d.expiry }}</pre></div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    </div>
+</body>
+</html>
