@@ -71,6 +71,25 @@ def http_handler(packet):
             print "\033[1;32m[HTTP]\033[1;m %-15s => %-15s RAW " % ( packet[IP].src, packet[IP].dst )
             dump_info(request)
 
+def telnet_handler(packet):
+
+    if IP in packet and packet[IP].src.startswith(local_ip):
+        data = str(packet[TCP].payload)
+
+        if data.strip():
+            print "\033[1;35m[TELNET]\033[1;m %-15s => %-15s %s" % ( packet[IP].src, packet[IP].dst, repr(data) )
+            dump_info(data)
+
+def packet_handler(packet):
+
+    if TCP not in packet:
+        return
+
+    if packet[TCP].dport == 23 or packet[TCP].sport == 23:
+        telnet_handler(packet)
+    else:
+        http_handler(packet)
+
 
 if __name__ == '__main__':
     if os.geteuid() != 0:
@@ -82,5 +101,5 @@ if __name__ == '__main__':
     interface = sys.argv[1]
     print "\033[1;36mSniffing on %s...\033[1;m" % interface
 
-    sniff(iface=interface, filter="tcp and port 80", prn=http_handler, store=0)
+    sniff(iface=interface, filter="tcp and (port 80 or port 23)", prn=packet_handler, store=0)
 
