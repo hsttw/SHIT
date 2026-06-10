@@ -13,6 +13,10 @@ uninstall:
 	rm -f $(PREFIX)/sbin/fakeAP
 	rm -f $(PREFIX)/sbin/sf
 
+serve:
+	@echo Serving SHIT web UI on http://0.0.0.0:5538 ...
+	php -S 0.0.0.0:5538 -t app/public router.php
+
 run:
 	@echo Run SHIT ...
 	./fakeAP start
