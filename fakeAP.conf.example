@@ -12,6 +12,10 @@ IP=172.16.0.1
 CHANNEL=4
 DRIVER=nl80211
 
+## Uplink interface the AP's traffic is NAT'd out through (default eth0).
+## Set to a second NIC (e.g. another wifi dongle / usb tether) to receive via it.
+UPLINK=eth0
+
 ## Log setting
 KEYWORD=user,passwd
 

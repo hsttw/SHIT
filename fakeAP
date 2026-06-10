@@ -155,9 +155,9 @@ class SHIT_AP(object):
 		comment = '-m comment --comment "{label}"'.format(label=label)
 		if start:
 			cmd  = ['iptables-save | grep -v "{label}" | iptables-restore']
-			cmd += ['iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE {comment}']
+			cmd += ['iptables -t nat -A POSTROUTING -o {UPLINK} -j MASQUERADE {comment}']
 			cmd += ['iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT {comment}']
-			cmd += ['iptables -A FORWARD -i {NIC} -o eth0 {comment}']
+			cmd += ['iptables -A FORWARD -i {NIC} -o {UPLINK} {comment}']
 		else:
 			cmd  = ['iptables-save | grep -v "{label}" | iptables-restore']
 
@@ -176,7 +176,7 @@ class SHIT_AP(object):
 	def conf(self, v):
 		import re
 
-		self._conf_ = {"CHANNEL": 4}
+		self._conf_ = {"CHANNEL": 4, "UPLINK": "eth0"}
 
 		conf = {_.split('=')[0]: '='.join(_.split('=')[1:]) for _ in v}
 		for _ in conf:
