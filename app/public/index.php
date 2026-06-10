@@ -1,60 +1,59 @@
 <?php
 
-require '../config/config.php';
+require __DIR__.'/../config/config.php';
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\ParameterBag;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
-$app->get('/', function () use ($app) {
-    if ($app['session']->get('user') == null) {
-        return $app->redirect('/login');
-    }
+function redirect(Response $res, string $to): Response
+{
+    return $res->withHeader('Location', $to)->withStatus(302);
+}
 
-    return $app->redirect('/monitor');
+$app->get('/', function (Request $req, Response $res) {
+    return redirect($res, empty($_SESSION['user']) ? '/login' : '/monitor');
 });
 
-$app->get('/login', function () use ($app) {
-    if ($app['session']->get('user') == null) {
-        return $app['twig']->render('login.twig');
+$app->get('/login', function (Request $req, Response $res) use ($twig) {
+    if (!empty($_SESSION['user'])) {
+        return redirect($res, '/monitor');
     }
-
-    return $app->redirect('/monitor');
+    $res->getBody()->write($twig->render('login.twig'));
+    return $res;
 });
 
-$app->post('/login', function (Request $request) use ($app) {
+$app->post('/login', function (Request $req, Response $res) use ($db) {
+    $body     = (array) $req->getParsedBody();
+    $username = htmlspecialchars($body['username'] ?? '');
+    $password = sha1($body['password'] ?? '');
 
-    $username = htmlspecialchars($request->request->get('username'));
-    $password = sha1($request->request->get('password'));
-
-    $sql   = "SELECT * FROM `users` WHERE username = ? AND password = ?";
-    $login = $app['db']->fetchAssoc($sql, [$username, $password]);
+    $sql   = 'SELECT * FROM `users` WHERE username = ? AND password = ?';
+    $login = $db ? $db->fetchAssociative($sql, [$username, $password]) : false;
 
     if ($login) {
-        $app['session']->set('user', ['username' => $username]);
-        $app['session']->set('token', sha1(uniqid($username, true)));
-        return $app->redirect('/monitor');
-    } else {
-        return $app->redirect('/login');
-    }
-});
-
-$app->get('/logout', function () use ($app) {
-    $app['session']->set('user', null);
-    return $app->redirect('/');
-});
-
-$app->get('/monitor', function () use ($app) {
-    if ($app['session']->get('user') == null) {
-        return $app->redirect('/login');
+        $_SESSION['user']  = ['username' => $username];
+        $_SESSION['token'] = sha1(uniqid($username, true));
+        return redirect($res, '/monitor');
     }
 
-    $sql  = "SELECT * FROM `http` ORDER BY timestamp ASC LIMIT 10";
-    $http = $app['db']->fetchAll($sql);
+    return redirect($res, '/login');
+});
 
-    return $app['twig']->render('monitor.twig', [
-        'items' => $http,
-    ]);
+$app->get('/logout', function (Request $req, Response $res) {
+    unset($_SESSION['user']);
+    return redirect($res, '/');
+});
+
+$app->get('/monitor', function (Request $req, Response $res) use ($twig, $db) {
+    if (empty($_SESSION['user'])) {
+        return redirect($res, '/login');
+    }
+
+    $sql  = 'SELECT * FROM `http` ORDER BY timestamp ASC LIMIT 10';
+    $http = $db ? $db->fetchAllAssociative($sql) : [];
+
+    $res->getBody()->write($twig->render('monitor.twig', ['items' => $http]));
+    return $res;
 });
 
 $app->run();

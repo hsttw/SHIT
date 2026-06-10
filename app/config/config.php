@@ -1,20 +1,30 @@
 <?php
 require_once __DIR__.'/../../vendor/autoload.php';
 
-$app = new Silex\Application();
-$app['debug'] = true;
-$app->register(new Silex\Provider\TwigServiceProvider(), array(
-    'twig.path' => __DIR__.'/../temples',
-));
-$app->register(new Silex\Provider\SessionServiceProvider());
+use Slim\Factory\AppFactory;
 
+// Native PHP session (replaces the old Silex SessionServiceProvider).
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+$app = AppFactory::create();
+$app->addBodyParsingMiddleware();
+$app->addRoutingMiddleware();
+$app->addErrorMiddleware(true, true, true);
+
+// Twig 3, wired directly (no framework provider to keep us off abandoned deps).
+$twig = new \Twig\Environment(
+    new \Twig\Loader\FilesystemLoader(__DIR__.'/../temples'),
+    ['debug' => true]
+);
+
+// SQLite via Doctrine DBAL 3.
 $dbpath = __DIR__.'/../../backend/shit.db';
-
+$db = null;
 if (file_exists($dbpath)) {
-    $app->register(new Silex\Provider\DoctrineServiceProvider(), [
-        'db.options' => [
-            'driver'   => 'pdo_sqlite',
-            'path'     => $dbpath,
-        ],
+    $db = \Doctrine\DBAL\DriverManager::getConnection([
+        'driver' => 'pdo_sqlite',
+        'path'   => $dbpath,
     ]);
 }
