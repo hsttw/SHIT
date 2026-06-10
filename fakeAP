@@ -5,7 +5,12 @@
 
 class SHIT_AP(object):
 	def __init__(self, conf="fakeAP.conf"):
+		self._conf_path = conf
 		with open(conf) as fd:
+			conf = fd.read().split('\n')
+		self.conf = [_ for _ in conf if _ and not _.startswith('#')]
+	def _loadConf(self):
+		with open(self._conf_path) as fd:
 			conf = fd.read().split('\n')
 		self.conf = [_ for _ in conf if _ and not _.startswith('#')]
 	def __call__(self, action, args):
@@ -28,6 +33,20 @@ class SHIT_AP(object):
 			for serv in ("hostapd", "dnsmasq"):
 				self.service(serv, start=False)
 			self.NAT(start=False)
+	def reload(self, args):
+		## Re-read fakeAP.conf and re-apply it to the running AP without a full
+		## stop/start, so config edits (SSID, IP, UPLINK, DHCP range...) take
+		## effect online. (issue #7)
+		self._loadConf()
+		if args.client:
+			self.wpa_supplicantStart()
+		else:
+			self.hostapdStart()
+			self.dnsmasqStart()
+			self.NAT(start=True)
+			self.ipSet()
+			for serv in ("hostapd", "dnsmasq"):
+				self.service(serv)
 	def scan(self, args):
 		result = self._scan_(args)
 		for idx, ret in enumerate(result):
@@ -244,7 +263,7 @@ if __name__ == '__main__':
 		help="client mode")
 	_a("-n", "--name", default="",
 		help="AP name.")
-	_a("action", choices=['start', 'stop', 'scan'],
+	_a("action", choices=['start', 'stop', 'scan', 'reload'],
 		help="action mode")
 	args = parser.parse_args()
 
